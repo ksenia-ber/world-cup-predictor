@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ЧМ 2026 — Прогнозы</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0e1a; color: #e0e0e0; min-height: 100vh; }
+
+  .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 24px; text-align: center; border-bottom: 3px solid #e94560; }
+  .header h1 { font-size: 28px; color: #fff; margin-bottom: 4px; }
+  .header p { color: #aaa; font-size: 14px; }
+  .status-bar { display: flex; justify-content: center; gap: 16px; margin-top: 8px; font-size: 12px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; vertical-align: middle; }
+  .status-live { background: #4caf50; animation: pulse 1.5s infinite; }
+  .status-off { background: #666; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 10px 20px; border: 1px solid #333; background: #151525; border-radius: 8px; cursor: pointer; font-size: 14px; color: #aaa; transition: all 0.2s; }
+  .tab.active { background: #e94560; color: #fff; border-color: #e94560; }
+  .tab:hover:not(.active) { background: #1e1e35; color: #fff; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .players-section { background: #151525; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .players-section h2 { font-size: 18px; margin-bottom: 12px; color: #e94560; }
+  .player-input { display: flex; gap: 8px; margin-bottom: 12px; }
+  .player-input input { flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #0a0e1a; color: #fff; font-size: 14px; }
+  .player-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .player-tag { background: #1e1e35; padding: 6px 12px; border-radius: 20px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+  .player-tag .remove { cursor: pointer; color: #e94560; font-weight: bold; }
+
+  .round-group { margin-bottom: 24px; }
+  .round-group h3 { font-size: 16px; color: #e94560; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #222; }
+
+  .match-card { background: #151525; border-radius: 10px; padding: 16px; margin-bottom: 10px; border: 1px solid #222; }
+  .match-card.live { border-color: #4caf50; box-shadow: 0 0 12px rgba(76,175,80,0.15); }
+  .match-card.placeholder { opacity: 0.45; border-style: dashed; }
+  .match-card.placeholder .team-name { color: #666; font-style: italic; }
+  .match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+  .match-teams { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; }
+  .match-teams input { width: 130px; padding: 6px 10px; border-radius: 6px; border: 1px solid #333; background: #0a0e1a; color: #fff; font-size: 14px; text-align: center; }
+  .match-teams .team-name { min-width: 100px; text-align: center; }
+  .vs { color: #666; font-size: 12px; }
+  .match-meta { display: flex; gap: 8px; align-items: center; font-size: 12px; color: #888; }
+  .match-date-label { color: #aaa; }
+  .live-badge { background: #4caf50; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; animation: pulse 1.5s infinite; }
+  .finished-badge { background: #333; color: #aaa; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+
+  .actual-result { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 8px 12px; background: #0f1a2e; border-radius: 8px; }
+  .actual-result label { font-size: 12px; color: #888; min-width: 80px; }
+  .actual-score { font-size: 22px; font-weight: 700; color: #fff; min-width: 20px; text-align: center; }
+  .actual-score.live-score { color: #4caf50; }
+  .score-input { width: 40px; padding: 6px; border-radius: 6px; border: 1px solid #333; background: #0a0e1a; color: #fff; font-size: 14px; text-align: center; }
+
+  .predictions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+  .prediction-cell { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #1a1a2e; border-radius: 8px; }
+  .prediction-cell .name { font-size: 12px; color: #aaa; min-width: 70px; }
+  .prediction-cell .score-input { width: 36px; padding: 4px; font-size: 13px; }
+  .points-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: auto; white-space: nowrap; }
+  .pts-3 { background: #1b5e20; color: #a5d6a7; }
+  .pts-2 { background: #e65100; color: #ffcc80; }
+  .pts-1 { background: #4a148c; color: #ce93d8; }
+  .pts-0 { background: #333; color: #777; }
+
+  .leaderboard { background: #151525; border-radius: 12px; overflow: hidden; }
+  .lb-header { display: grid; grid-template-columns: 40px 1fr 70px 70px 70px 70px 80px; padding: 12px 16px; background: #1a1a2e; font-size: 12px; color: #888; font-weight: 600; }
+  .lb-row { display: grid; grid-template-columns: 40px 1fr 70px 70px 70px 70px 80px; padding: 12px 16px; border-top: 1px solid #222; align-items: center; transition: background 0.2s; }
+  .lb-row:hover { background: #1a1a2e; }
+  .lb-rank { font-weight: 700; font-size: 18px; }
+  .lb-rank.gold { color: #ffd700; }
+  .lb-rank.silver { color: #c0c0c0; }
+  .lb-rank.bronze { color: #cd7f32; }
+  .lb-name { font-weight: 600; font-size: 15px; }
+  .lb-pts { text-align: center; font-size: 14px; }
+  .lb-total { text-align: center; font-size: 20px; font-weight: 700; color: #e94560; }
+
+  .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
+  .btn-primary { background: #e94560; color: #fff; }
+  .btn-primary:hover { background: #c73650; }
+  .btn-danger { background: transparent; color: #e94560; border: 1px solid #e94560; padding: 4px 10px; font-size: 12px; cursor: pointer; border-radius: 6px; }
+  .btn-sm { padding: 6px 14px; font-size: 13px; }
+
+  .add-match { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+  .add-match select { padding: 10px; border-radius: 8px; border: 1px solid #333; background: #0a0e1a; color: #fff; font-size: 14px; }
+
+  .match-actions { display: flex; gap: 6px; align-items: center; }
+
+  .scoring-info { background: #151525; border-radius: 12px; padding: 16px; margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap; }
+  .scoring-info div { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-3 { background: #4caf50; }
+  .dot-2 { background: #ff9800; }
+  .dot-1 { background: #9c27b0; }
+
+  .refresh-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 10px 14px; background: #151525; border-radius: 10px; }
+  .refresh-bar span { font-size: 12px; color: #666; }
+
+  @media (max-width: 600px) {
+    .predictions-grid { grid-template-columns: 1fr; }
+    .lb-header, .lb-row { grid-template-columns: 30px 1fr 50px 50px 50px 50px 60px; font-size: 12px; padding: 10px; }
+    .match-teams input, .match-teams .team-name { width: 90px; min-width: 90px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>ЧМ 2026 — Семейные прогнозы</h1>
+  <p>3 очка — точный счёт &middot; 2 очка — исход + разница мячей &middot; 1 очко — верный исход</p>
+  <div class="status-bar">
+    <span><span class="status-dot" id="api-dot"></span> <span id="api-status">Подключение...</span></span>
+    <span id="last-update"></span>
+  </div>
+</div>
+
+<div class="container">
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('matches')">Матчи и прогнозы</div>
+    <div class="tab" onclick="showTab('leaderboard')">Таблица лидеров</div>
+  </div>
+
+
+  <div id="panel-matches" class="panel active">
+    <div class="refresh-bar">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="round-filter" onchange="renderMatches()" style="padding:6px 10px;border-radius:8px;border:1px solid #333;background:#0a0e1a;color:#fff;font-size:14px;">
+          <option value="all" selected>Все матчи</option>
+          <option value="1/16 финала">1/16 финала</option>
+          <option value="1/8 финала">1/8 финала</option>
+          <option value="Четвертьфинал">Четвертьфинал</option>
+          <option value="Полуфинал">Полуфинал</option>
+          <option value="Матч за 3-е место">Матч за 3-е место</option>
+          <option value="Финал">Финал</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="fetchFromAPI()">Обновить результаты</button>
+      </div>
+      <span id="auto-refresh-label">Обновляется при загрузке страницы</span>
+    </div>
+    <div id="matches-container"></div>
+  </div>
+
+  <div id="panel-leaderboard" class="panel">
+    <div class="scoring-info">
+      <div><span class="dot dot-3"></span> 3 очка — Точный счёт</div>
+      <div><span class="dot dot-2"></span> 2 очка — Исход + разница мячей</div>
+      <div><span class="dot dot-1"></span> 1 очко — Верный исход</div>
+    </div>
+    <div class="leaderboard" id="leaderboard"></div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_PLAYERS = ['Валерий', 'Тамара', 'Николай', 'Ольга', 'Алексей', 'Ксения'];
+
+const TEAM_RU = {
+  'Mexico':'Мексика','South Africa':'ЮАР','South Korea':'Южная Корея','Czech Republic':'Чехия',
+  'United States':'США','Paraguay':'Парагвай','Haiti':'Гаити','Scotland':'Шотландия',
+  'Australia':'Австралия','Turkey':'Турция','Brazil':'Бразилия','Japan':'Япония',
+  'Germany':'Германия','Netherlands':'Нидерланды','Morocco':'Марокко','France':'Франция',
+  'Sweden':'Швеция','England':'Англия','DR Congo':'ДР Конго','Democratic Republic of the Congo':'ДР Конго','Belgium':'Бельгия',
+  'Senegal':'Сенегал','Spain':'Испания','Austria':'Австрия','Portugal':'Португалия',
+  'Croatia':'Хорватия','Switzerland':'Швейцария','Algeria':'Алжир','Egypt':'Египет',
+  'Argentina':'Аргентина','Cabo Verde':'Кабо-Верде','Cape Verde':'Кабо-Верде',
+  'Colombia':'Колумбия','Ghana':'Гана','Canada':'Канада','Ecuador':'Эквадор',
+  'Norway':'Норвегия','Ivory Coast':"Кот-д'Ивуар",'Côte d\'Ivoire':"Кот-д'Ивуар",
+  "Cote d'Ivoire":"Кот-д'Ивуар","Cote d Ivoire":"Кот-д'Ивуар",
+  'Bosnia and Herzegovina':'Босния и Герцеговина','Bosnia & Herzegovina':'Босния и Герцеговина',
+  'Iran':'Иран','Serbia':'Сербия','Denmark':'Дания','Wales':'Уэльс','Poland':'Польша',
+  'Uruguay':'Уругвай','Chile':'Чили','Peru':'Перу','Venezuela':'Венесуэла',
+  'Nigeria':'Нигерия','Cameroon':'Камерун','Tunisia':'Тунис','Mali':'Мали',
+  'Tanzania':'Танзания','Uganda':'Уганда','Kenya':'Кения','Burkina Faso':'Буркина-Фасо',
+  'China':'Китай','Saudi Arabia':'Саудовская Аравия','Qatar':'Катар','Iraq':'Ирак',
+  'Panama':'Панама','Costa Rica':'Коста-Рика','Jamaica':'Ямайка','Honduras':'Гондурас',
+  'El Salvador':'Сальвадор','Trinidad and Tobago':'Тринидад и Тобаго',
+  'New Zealand':'Новая Зеландия','Indonesia':'Индонезия','Bolivia':'Боливия',
+  'Iceland':'Исландия','Italy':'Италия','Romania':'Румыния','Greece':'Греция',
+  'Slovakia':'Словакия','Slovenia':'Словения','Albania':'Албания','Georgia':'Грузия',
+  'Ukraine':'Украина','Finland':'Финляндия','Hungary':'Венгрия','Bulgaria':'Болгария',
+  'Ireland':'Ирландия','Republic of Ireland':'Ирландия','Northern Ireland':'Сев. Ирландия',
+  'Russia':'Россия','Sweden':'Швеция','Congo':'Конго',
+};
+
+const ROUND_MAP = {
+  'group': null,
+  'r32': '1/16 финала',
+  'r16': '1/8 финала',
+  'qf': 'Четвертьфинал',
+  'sf': 'Полуфинал',
+  'third': 'Матч за 3-е место',
+  'final': 'Финал',
+};
+
+const ROUND_ORDER = ['1/16 финала', '1/8 финала', 'Четвертьфинал', 'Полуфинал', 'Матч за 3-е место', 'Финал'];
+
+function tr(name) { return TEAM_RU[name] || name; }
+
+let state = JSON.parse(localStorage.getItem('wc2026v3') || 'null');
+if (!state) {
+  state = { players: [...DEFAULT_PLAYERS], matches: [], apiMatches: [] };
+  save();
+}
+if (!state.apiMatches) state.apiMatches = [];
+
+function save() { localStorage.setItem('wc2026v3', JSON.stringify(state)); }
+
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'leaderboard') renderLeaderboard();
+}
+
+function addPlayer() {
+  const input = document.getElementById('new-player');
+  const name = input.value.trim();
+  if (!name || state.players.includes(name)) return;
+  state.players.push(name);
+  state.matches.forEach(m => { m.predictions[name] = { home: '', away: '' }; });
+  save(); input.value = '';
+  renderPlayers(); renderMatches();
+}
+
+function removePlayer(name) {
+  if (!confirm('Удалить ' + name + '?')) return;
+  state.players = state.players.filter(p => p !== name);
+  state.matches.forEach(m => { delete m.predictions[name]; });
+  save(); renderPlayers(); renderMatches();
+}
+
+function renderPlayers() {
+  document.getElementById('player-tags').innerHTML = state.players.map(p =>
+    `<span class="player-tag">${p}<span class="remove" onclick="removePlayer('${esc(p)}')">&times;</span></span>`
+  ).join('');
+}
+
+function updatePrediction(apiId, player, side, value) {
+  const m = state.matches.find(m => m.apiId === apiId);
+  if (m) { m.predictions[player][side] = value; save(); }
+}
+
+function calcPoints(pred, actual) {
+  const ph = parseInt(pred.home), pa = parseInt(pred.away);
+  const ah = parseInt(actual.home), aa = parseInt(actual.away);
+  if (isNaN(ph) || isNaN(pa) || isNaN(ah) || isNaN(aa)) return null;
+  if (ph === ah && pa === aa) return 3;
+  const pOutcome = ph > pa ? 'H' : ph < pa ? 'A' : 'D';
+  const aOutcome = ah > aa ? 'H' : ah < aa ? 'A' : 'D';
+  if (pOutcome !== aOutcome) return 0;
+  if ((ph - pa) === (ah - aa)) return 2;
+  return 1;
+}
+
+function pointsLabel(pts) {
+  if (pts === 1) return '1 очко';
+  if (pts >= 2 && pts <= 4) return pts + ' очка';
+  return pts + ' очков';
+}
+
+function parseDateSort(d) {
+  const m = d.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+  if (!m) return 0;
+  return new Date(+m[3], +m[1]-1, +m[2], +m[4], +m[5]).getTime();
+}
+
+const STADIUM_BST_OFFSET = {
+  '1':6,'2':6,'3':6,
+  '4':6,'5':6,'6':6,
+  '7':5,'8':5,'9':5,'10':5,'11':5,'12':5,
+  '13':8,'14':8,'15':8,'16':8,
+};
+
+const STADIUM_UTC_OFFSET = {
+  '1':-5,'2':-5,'3':-5,
+  '4':-5,'5':-5,'6':-5,
+  '7':-4,'8':-4,'9':-4,'10':-4,'11':-4,'12':-4,
+  '13':-7,'14':-7,'15':-7,'16':-7,
+};
+
+function toUTCms(d, stadiumId) {
+  const m = d.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+  if (!m) return 0;
+  const venueOffset = STADIUM_UTC_OFFSET[String(stadiumId)] || -4;
+  return Date.UTC(+m[3], +m[1]-1, +m[2], +m[4] - venueOffset, +m[5]);
+}
+
+function formatLocal(utcMs) {
+  if (!utcMs) return '';
+  const dt = new Date(utcMs);
+  const months = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  const hh = String(dt.getHours()).padStart(2,'0');
+  const mm = String(dt.getMinutes()).padStart(2,'0');
+  return dt.getDate() + ' ' + months[dt.getMonth()] + ', ' + hh + ':' + mm;
+}
+
+const LABEL_RU = {
+  'Winner': 'Победитель', 'Loser': 'Проигравший', 'Match': 'матча',
+};
+function trLabel(label) {
+  if (!label) return '?';
+  return label.replace(/Winner Match (\d+)/, 'Побед. матча $1').replace(/Loser Match (\d+)/, 'Проигр. матча $1');
+}
+
+function mergeAPIData(apiGames) {
+  const knockout = apiGames.filter(g => ROUND_MAP[g.type]);
+
+  state.apiMatches = knockout.map(g => {
+    const hasTeams = g.home_team_name_en && g.away_team_name_en
+      && !g.home_team_name_en.startsWith('Winner')
+      && !g.home_team_name_en.startsWith('Loser')
+      && !g.home_team_name_en.startsWith('TBD')
+      && g.home_team_id !== '0' && g.home_team_id !== 0;
+
+    return {
+      apiId: g.id || g._id,
+      round: ROUND_MAP[g.type],
+      homeTeam: hasTeams ? tr(g.home_team_name_en) : trLabel(g.home_team_label),
+      awayTeam: hasTeams ? tr(g.away_team_name_en) : trLabel(g.away_team_label),
+      dateRaw: g.local_date || '',
+      stadiumId: g.stadium_id,
+      utcMs: toUTCms(g.local_date || '', g.stadium_id),
+      homeScore: g.home_score,
+      awayScore: g.away_score,
+      finished: g.finished === true || g.finished === 'TRUE' || g.finished === 'true',
+      timeElapsed: g.time_elapsed || 'notstarted',
+      placeholder: !hasTeams,
+    };
+  });
+
+  state.apiMatches.sort((a, b) => a.utcMs - b.utcMs);
+
+  state.apiMatches.forEach(am => {
+    let existing = state.matches.find(m => m.apiId === am.apiId);
+    if (!existing) {
+      const preds = {};
+      state.players.forEach(p => { preds[p] = { home: '', away: '' }; });
+      state.matches.push({
+        apiId: am.apiId,
+        round: am.round,
+        predictions: preds,
+      });
+    }
+  });
+
+  save();
+}
+
+function getAPIMatch(apiId) {
+  return state.apiMatches.find(a => a.apiId === apiId);
+}
+
+const API_BASE = 'https://worldcup26.ir';
+const CORS_PROXIES = [
+  url => url,
+  url => 'https://corsproxy.io/?' + encodeURIComponent(url),
+  url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+];
+
+let apiOnline = false;
+
+async function fetchFromAPI() {
+  const dot = document.getElementById('api-dot');
+  const statusEl = document.getElementById('api-status');
+  const updateEl = document.getElementById('last-update');
+
+  for (const proxyFn of CORS_PROXIES) {
+    try {
+      const url = proxyFn(API_BASE + '/get/games');
+      const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const games = Array.isArray(data) ? data : (data.data || data.games || []);
+      if (!games.length) continue;
+
+      mergeAPIData(games);
+      apiOnline = true;
+      dot.className = 'status-dot status-live';
+      statusEl.textContent = 'Live';
+      updateEl.textContent = 'Обновлено: ' + new Date().toLocaleTimeString('ru-RU');
+      renderMatches();
+      return;
+    } catch (e) { /* try next proxy */ }
+  }
+
+  dot.className = 'status-dot status-off';
+  statusEl.textContent = 'Офлайн — ручной режим';
+  updateEl.textContent = '';
+  apiOnline = false;
+}
+
+function renderMatches() {
+  const container = document.getElementById('matches-container');
+  let html = '';
+
+  const roundFilter = document.getElementById('round-filter').value;
+  const allWithAPI = state.matches.map(m => ({ m, am: getAPIMatch(m.apiId) })).filter(x => x.am && (roundFilter === 'all' || x.m.round === roundFilter));
+  allWithAPI.sort((a, b) => a.am.utcMs - b.am.utcMs);
+
+  let currentRound = '';
+  allWithAPI.forEach(({ m, am }) => {
+      if (m.round !== currentRound) {
+        if (currentRound) html += '</div>';
+        currentRound = m.round;
+        html += `<div class="round-group"><h3>${m.round}</h3>`;
+      }
+
+      const isLive = am.timeElapsed && am.timeElapsed !== 'notstarted' && !am.finished;
+      const isFinished = am.finished;
+      const hasScore = am.homeScore != null && am.awayScore != null && (isLive || isFinished);
+
+      let statusBadge = '';
+      if (isLive) statusBadge = `<span class="live-badge">${am.timeElapsed}'</span>`;
+      else if (isFinished) statusBadge = `<span class="finished-badge">Завершён</span>`;
+
+      const cardClass = am.placeholder ? 'placeholder' : (isLive ? 'live' : '');
+      html += `<div class="match-card ${cardClass}">
+        <div class="match-header">
+          <div class="match-teams">
+            <span class="team-name">${am.homeTeam}</span>
+            <span class="vs">—</span>
+            <span class="team-name">${am.awayTeam}</span>
+          </div>
+          <div class="match-meta">
+            <span class="match-date-label">${formatLocal(am.utcMs)}</span>
+            ${statusBadge}
+          </div>
+        </div>`;
+
+      if (am.placeholder) {
+        html += `</div>`;
+        return;
+      }
+
+      if (hasScore) {
+        const scoreClass = isLive ? 'live-score' : '';
+        html += `<div class="actual-result">
+          <label>Счёт:</label>
+          <span class="actual-score ${scoreClass}">${am.homeScore}</span>
+          <span class="vs">:</span>
+          <span class="actual-score ${scoreClass}">${am.awayScore}</span>
+        </div>`;
+      } else {
+        html += `<div class="actual-result"><label>Ещё не начался</label></div>`;
+      }
+
+      html += `<div class="predictions-grid">`;
+      state.players.forEach(p => {
+        const pred = m.predictions[p] || { home: '', away: '' };
+        const actual = hasScore ? { home: am.homeScore, away: am.awayScore } : null;
+        const pts = (actual && isFinished) ? calcPoints(pred, actual) : null;
+        const badge = pts !== null ? `<span class="points-badge pts-${pts}">${pointsLabel(pts)}</span>` : '';
+
+        const disabled = isFinished ? 'disabled style="opacity:0.6"' : '';
+        html += `<div class="prediction-cell">
+          <span class="name">${p}</span>
+          <input class="score-input" value="${pred.home}" placeholder="-" ${disabled}
+            oninput="updatePrediction('${m.apiId}','${esc(p)}','home',this.value)">
+          <span class="vs">:</span>
+          <input class="score-input" value="${pred.away}" placeholder="-" ${disabled}
+            oninput="updatePrediction('${m.apiId}','${esc(p)}','away',this.value)">
+          ${badge}
+        </div>`;
+      });
+      html += `</div></div>`;
+  });
+  if (currentRound) html += `</div>`;
+
+  if (!state.matches.length) {
+    html = '<p style="color:#666;text-align:center;padding:40px;">Загрузка матчей...</p>';
+  }
+  container.innerHTML = html;
+}
+
+function renderLeaderboard() {
+  const scored = state.matches.filter(m => {
+    const am = getAPIMatch(m.apiId);
+    return am && am.finished;
+  });
+
+  const stats = state.players.map(p => {
+    let total = 0, exact = 0, diff = 0, outcome = 0, wrong = 0;
+    scored.forEach(m => {
+      const am = getAPIMatch(m.apiId);
+      const pred = m.predictions[p];
+      if (!pred || !am) return;
+      const pts = calcPoints(pred, { home: am.homeScore, away: am.awayScore });
+      if (pts === 3) { exact++; total += 3; }
+      else if (pts === 2) { diff++; total += 2; }
+      else if (pts === 1) { outcome++; total += 1; }
+      else if (pts === 0) { wrong++; }
+    });
+    return { name: p, total, exact, diff, outcome, wrong };
+  }).sort((a, b) => b.total - a.total || b.exact - a.exact);
+
+  let html = `<div class="lb-header">
+    <div>#</div><div>Игрок</div><div style="text-align:center">3 оч</div><div style="text-align:center">2 оч</div><div style="text-align:center">1 оч</div><div style="text-align:center">0 оч</div><div style="text-align:center">Итого</div>
+  </div>`;
+
+  stats.forEach((s, i) => {
+    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    html += `<div class="lb-row">
+      <div class="lb-rank ${rankClass}">${i + 1}</div>
+      <div class="lb-name">${s.name}</div>
+      <div class="lb-pts">${s.exact}</div>
+      <div class="lb-pts">${s.diff}</div>
+      <div class="lb-pts">${s.outcome}</div>
+      <div class="lb-pts">${s.wrong}</div>
+      <div class="lb-total">${s.total}</div>
+    </div>`;
+  });
+
+  if (!state.players.length) html += '<p style="color:#666;text-align:center;padding:40px;">Сначала добавьте участников.</p>';
+  document.getElementById('leaderboard').innerHTML = html;
+}
+
+
+function esc(s) { return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function resetData() {
+  if (confirm('Сбросить все данные и прогнозы?')) {
+    localStorage.removeItem('wc2026v3');
+    location.reload();
+  }
+}
+
+renderPlayers();
+fetchFromAPI();
+</script>
+</body>
+</html>
