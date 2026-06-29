@@ -116,13 +116,16 @@
 
 <div class="container">
   <div class="tabs">
-    <div class="tab active" onclick="showTab('current')">Текущие и предстоящие</div>
-    <div class="tab" onclick="showTab('past')">Завершённые</div>
+    <div class="tab active" onclick="showTab('matches')">Матчи</div>
     <div class="tab" onclick="showTab('bracket')">Сетка</div>
     <div class="tab" onclick="showTab('leaderboard')">Таблица</div>
   </div>
 
-  <div id="round-filter-wrap" style="margin-bottom:12px">
+  <div id="match-filters" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+    <select id="status-filter" onchange="render()" style="padding:6px 10px;border-radius:8px;border:1px solid #333;background:#0a0e1a;color:#fff;font-size:13px;">
+      <option value="current" selected>Текущие и предстоящие</option>
+      <option value="past">Завершённые</option>
+    </select>
     <select id="round-filter" onchange="render()" style="padding:6px 10px;border-radius:8px;border:1px solid #333;background:#0a0e1a;color:#fff;font-size:13px;">
       <option value="all" selected>Все раунды</option>
       <option value="1/16 финала">1/16 финала</option>
@@ -134,8 +137,7 @@
     </select>
   </div>
 
-  <div id="panel-current" class="panel active"></div>
-  <div id="panel-past" class="panel"></div>
+  <div id="panel-matches" class="panel active"></div>
   <div id="panel-bracket" class="panel"></div>
   <div id="panel-leaderboard" class="panel"></div>
 </div>
@@ -234,7 +236,7 @@ function showTab(name) {
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   event.target.classList.add('active');
   document.getElementById('panel-'+name).classList.add('active');
-  document.getElementById('round-filter-wrap').style.display = (name==='current'||name==='past') ? '' : 'none';
+  document.getElementById('match-filters').style.display = (name==='matches') ? '' : 'none';
 }
 
 function card(m) {
@@ -293,27 +295,19 @@ function render() {
   const filtered = matches.filter(m => rf==='all' || m.round===rf);
   const isLiveMatch = m => m.elapsed&&m.elapsed!=='notstarted'&&!m.finished;
   const isCurrent = m => !m.finished || isLiveMatch(m) || isToday(m.utcMs);
-  const curMatches = filtered.filter(m => isCurrent(m));
-  const pastMatches = filtered.filter(m => !isCurrent(m)).slice().sort((a,b) => b.utcMs - a.utcMs);
+  const sf = document.getElementById('status-filter').value;
+  const shown = sf==='current' ? filtered.filter(m => isCurrent(m)) : filtered.filter(m => !isCurrent(m)).slice().sort((a,b) => b.utcMs - a.utcMs);
 
-  let cur='', cD='', cSt='';
-  curMatches.forEach(m => {
+  let html='', lastD='', lastSt='';
+  shown.forEach(m => {
     const dk = dateKey(m.utcMs);
-    if (dk!==cD) { cD=dk; cSt=''; cur+=`<div class="round-label">${dateLabel(m.utcMs)}</div>`; }
-    if (m.round!==cSt) { cSt=m.round; cur+=`<div class="stage-label">${m.round}</div>`; }
-    cur += card(m);
+    if (dk!==lastD) { lastD=dk; lastSt=''; html+=`<div class="round-label">${dateLabel(m.utcMs)}</div>`; }
+    if (m.round!==lastSt) { lastSt=m.round; html+=`<div class="stage-label">${m.round}</div>`; }
+    html += card(m);
   });
 
-  let past='', pD='', pSt='';
-  pastMatches.forEach(m => {
-    const dk = dateKey(m.utcMs);
-    if (dk!==pD) { pD=dk; pSt=''; past+=`<div class="round-label">${dateLabel(m.utcMs)}</div>`; }
-    if (m.round!==pSt) { pSt=m.round; past+=`<div class="stage-label">${m.round}</div>`; }
-    past += card(m);
-  });
-
-  document.getElementById('panel-current').innerHTML = cur||'<p style="color:#666;text-align:center;padding:40px">Нет текущих матчей</p>';
-  document.getElementById('panel-past').innerHTML = past||'<p style="color:#666;text-align:center;padding:40px">Нет завершённых матчей</p>';
+  const empty = sf==='current' ? 'Нет текущих матчей' : 'Нет завершённых матчей';
+  document.getElementById('panel-matches').innerHTML = html||`<p style="color:#666;text-align:center;padding:40px">${empty}</p>`;
   renderLB();
   renderBracket();
 }
