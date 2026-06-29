@@ -269,6 +269,19 @@ function card(m) {
   return h + `</div>`;
 }
 
+function dateLabel(utcMs) {
+  if (!utcMs) return '';
+  const d = new Date(utcMs);
+  const days = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+  const mo = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  return days[d.getDay()] + ', ' + d.getDate() + ' ' + mo[d.getMonth()];
+}
+
+function dateKey(utcMs) {
+  const d = new Date(utcMs);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
 function isToday(utcMs) {
   const now = new Date(), d = new Date(utcMs);
   return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
@@ -282,15 +295,17 @@ function render() {
   const curMatches = filtered.filter(m => isCurrent(m));
   const pastMatches = filtered.filter(m => !isCurrent(m)).slice().sort((a,b) => b.utcMs - a.utcMs);
 
-  let cur='', cR='';
+  let cur='', cD='';
   curMatches.forEach(m => {
-    if (m.round!==cR) { cR=m.round; cur+=`<div class="round-label">${m.round}</div>`; }
+    const dk = dateKey(m.utcMs);
+    if (dk!==cD) { cD=dk; cur+=`<div class="round-label">${dateLabel(m.utcMs)}</div>`; }
     cur += card(m);
   });
 
-  let past='', pR='';
+  let past='', pD='';
   pastMatches.forEach(m => {
-    if (m.round!==pR) { pR=m.round; past+=`<div class="round-label">${m.round}</div>`; }
+    const dk = dateKey(m.utcMs);
+    if (dk!==pD) { pD=dk; past+=`<div class="round-label">${dateLabel(m.utcMs)}</div>`; }
     past += card(m);
   });
 
