@@ -54,9 +54,9 @@
   .pts-0 { color: #555; }
   .pred-empty { color: #333; }
 
-  .leaderboard { background: #151525; border-radius: 12px; overflow: hidden; }
-  .lb-header { display: grid; grid-template-columns: 32px 1fr 50px 50px 50px 50px 60px; padding: 10px 14px; background: #1a1a2e; font-size: 11px; color: #888; font-weight: 600; }
-  .lb-row { display: grid; grid-template-columns: 32px 1fr 50px 50px 50px 50px 60px; padding: 10px 14px; border-top: 1px solid #222; align-items: center; }
+  .leaderboard { background: #151525; border-radius: 12px; overflow: hidden; max-width: 500px; }
+  .lb-header { display: grid; grid-template-columns: 28px 1fr 36px 36px 36px 36px 50px; padding: 10px 12px; background: #1a1a2e; font-size: 11px; color: #888; font-weight: 600; }
+  .lb-row { display: grid; grid-template-columns: 28px 1fr 36px 36px 36px 36px 50px; padding: 10px 12px; border-top: 1px solid #222; align-items: center; }
   .lb-row:hover { background: #1a1a2e; }
   .lb-rank { font-weight: 700; font-size: 16px; }
   .lb-rank.gold { color: #ffd700; }
@@ -75,17 +75,17 @@
 
   /* Bracket */
   .bracket-wrap { overflow-x: auto; padding-bottom: 16px; }
-  .bracket { display: flex; align-items: stretch; min-width: 750px; }
-  .bracket-header { display: flex; min-width: 750px; }
-  .bracket-header span { min-width: 115px; flex-shrink: 0; text-align: center; font-size: 10px; color: #e94560; font-weight: 600; padding: 4px 0; }
-  .bracket-round { display: flex; flex-direction: column; justify-content: space-around; min-width: 115px; flex-shrink: 0; }
-  .bracket-match { background: #151525; border: 1px solid #222; border-radius: 5px; margin: 3px 3px; font-size: 10px; overflow: hidden; }
+  .bracket { display: flex; align-items: stretch; min-width: 850px; }
+  .bracket-header { display: flex; min-width: 850px; }
+  .bracket-header span { min-width: 135px; flex-shrink: 0; text-align: center; font-size: 10px; color: #e94560; font-weight: 600; padding: 4px 0; }
+  .bracket-round { display: flex; flex-direction: column; justify-content: space-around; min-width: 135px; flex-shrink: 0; }
+  .bracket-match { background: #151525; border: 1px solid #222; border-radius: 5px; margin: 3px 4px; font-size: 11px; overflow: hidden; }
   .bracket-match.live { border-color: #4caf50; }
   .bracket-match.placeholder { opacity: 0.35; border-style: dashed; }
-  .bm-team { display: flex; align-items: center; padding: 3px 5px; gap: 3px; }
+  .bm-team { display: flex; align-items: center; padding: 4px 6px; gap: 3px; }
   .bm-team:first-child { border-bottom: 1px solid #1a1a2e; }
   .bm-flag { font-size: 12px; line-height: 1; }
-  .bm-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10px; }
+  .bm-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
   .bm-score { font-weight: 700; font-size: 11px; min-width: 12px; text-align: right; }
   .bm-score.live-sc { color: #4caf50; }
   .bm-winner .bm-name { font-weight: 700; }
@@ -359,13 +359,20 @@ function renderBracket() {
   // QF-97 ← 89,90 | QF-98 ← 93,94 | QF-99 ← 91,92 | QF-100 ← 95,96
   // SF-101 ← 97,98 | SF-102 ← 99,100
   let html = '<div class="bracket-wrap">';
-  html += '<div class="bracket-header"><span>1/16</span><span>1/8</span><span>1/4</span><span>1/2</span><span>Финал</span></div>';
+  html += '<div class="bracket-header"><span>1/16</span><span>1/8</span><span>1/4</span><span>1/2</span><span>Финал / 3-е</span></div>';
   html += '<div class="bracket">';
   html += col(['74','77','73','75','76','78','79','80','83','84','81','82','86','88','85','87']);
   html += col(['89','90','91','92','93','94','95','96']);
   html += col(['97','99','98','100']);
   html += col(['101','102']);
-  html += col(['104','103']);
+  // Final + 3rd place with labels
+  let fin = '<div class="bracket-round">';
+  fin += '<div style="font-size:9px;color:#e94560;text-align:center;padding:2px 0">Финал</div>';
+  fin += bmCard(getM('104'));
+  fin += '<div style="font-size:9px;color:#e94560;text-align:center;padding:2px 0">3-е место</div>';
+  fin += bmCard(getM('103'));
+  fin += '</div>';
+  html += fin;
   html += '</div></div>';
   document.getElementById('panel-bracket').innerHTML = html;
 }
