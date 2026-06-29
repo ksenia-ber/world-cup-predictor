@@ -243,7 +243,7 @@ function card(m) {
   const pr = PREDICTIONS[m.id];
 
   let badge = '';
-  if (isLive) badge = `<span class="live-badge">${m.elapsed}'</span>`;
+  if (isLive) { const min = /^\d+$/.test(m.elapsed) ? m.elapsed+"'" : 'LIVE'; badge = `<span class="live-badge">${min}</span>`; }
   else if (m.finished) badge = `<span class="finished-badge">завершён</span>`;
 
   let sc = '<span class="vs">—</span>';
