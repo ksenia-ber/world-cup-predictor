@@ -27,7 +27,8 @@
   .panel { display: none; }
   .panel.active { display: block; }
 
-  .round-label { font-size: 14px; color: #e94560; margin: 16px 0 8px; padding-bottom: 4px; border-bottom: 1px solid #222; }
+  .round-label { font-size: 14px; color: #e94560; margin: 16px 0 4px; padding-bottom: 4px; border-bottom: 1px solid #222; }
+  .stage-label { font-size: 11px; color: #888; margin: 2px 0 6px; padding-left: 2px; }
 
   .match { background: #151525; border-radius: 10px; margin-bottom: 8px; border: 1px solid #222; overflow: hidden; }
   .match.live { border-color: #4caf50; box-shadow: 0 0 10px rgba(76,175,80,0.12); }
@@ -141,7 +142,7 @@
 
 <script>
 const PLAYERS = ['Валерий','Тома','Николай','Ольга','Алексей','Ксения'];
-const SHORT  = ['\u{1F42F}Валера','\u{1F431}Тома','\u{1F436}Коля','\u{1F430}Оля','\u{1F42C}Лёха','\u{1F427}Ксю'];
+const SHORT  = ['\u{1F42F} Валера','\u{1F431} Тома','\u{1F436} Коля','\u{1F430} Оля','\u{1F42C} Лёха','\u{1F427} Ксю'];
 
 // =============================================
 // ПРОГНОЗЫ — Ксения вносит вручную и пушит
@@ -295,17 +296,19 @@ function render() {
   const curMatches = filtered.filter(m => isCurrent(m));
   const pastMatches = filtered.filter(m => !isCurrent(m)).slice().sort((a,b) => b.utcMs - a.utcMs);
 
-  let cur='', cD='';
+  let cur='', cD='', cSt='';
   curMatches.forEach(m => {
     const dk = dateKey(m.utcMs);
-    if (dk!==cD) { cD=dk; cur+=`<div class="round-label">${dateLabel(m.utcMs)}</div>`; }
+    if (dk!==cD) { cD=dk; cSt=''; cur+=`<div class="round-label">${dateLabel(m.utcMs)}</div>`; }
+    if (m.round!==cSt) { cSt=m.round; cur+=`<div class="stage-label">${m.round}</div>`; }
     cur += card(m);
   });
 
-  let past='', pD='';
+  let past='', pD='', pSt='';
   pastMatches.forEach(m => {
     const dk = dateKey(m.utcMs);
-    if (dk!==pD) { pD=dk; past+=`<div class="round-label">${dateLabel(m.utcMs)}</div>`; }
+    if (dk!==pD) { pD=dk; pSt=''; past+=`<div class="round-label">${dateLabel(m.utcMs)}</div>`; }
+    if (m.round!==pSt) { pSt=m.round; past+=`<div class="stage-label">${m.round}</div>`; }
     past += card(m);
   });
 
