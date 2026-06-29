@@ -252,7 +252,7 @@ function renderLB() {
       const pt = pts(pr[0],pr[1],m.hScore,m.aScore);
       if(pt===3){e++;t+=3;}else if(pt===2){d++;t+=2;}else if(pt===1){o++;t+=1;}else if(pt===0){w++;}
     });
-    return {name:p,t,e,d,o,w};
+    return {name:SHORT[PLAYERS.indexOf(p)],t,e,d,o,w};
   }).sort((a,b)=>b.t-a.t||b.e-a.e);
 
   let h = `<div class="scoring-info">
