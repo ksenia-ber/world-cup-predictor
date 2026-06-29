@@ -146,6 +146,16 @@
 const PLAYERS = ['Валерий','Тома','Николай','Ольга','Алексей','Ксения'];
 const SHORT  = ['\u{1F42F} Валера','\u{1F431} Тома','\u{1F436} Коля','\u{1F430} Оля','\u{1F42C} Лёха','\u{1F427} Ксю'];
 
+// FT-счёт (90 мин) для матчей с овертаймом — для подсчёта очков
+const FT_SCORES = {
+  '74': [1,1],
+};
+
+// Пенальти — формат: 'matchId': [дома, гости]
+const PEN_SCORES = {
+  // '74': [4,2],
+};
+
 // =============================================
 // ПРОГНОЗЫ — Ксения вносит вручную и пушит
 // Формат: 'matchId': { 'Имя': [голы_дома, голы_гостей] }
@@ -249,7 +259,11 @@ function card(m) {
   else if (m.finished) badge = `<span class="finished-badge">завершён</span>`;
 
   let sc = '<span class="vs">—</span>';
-  if (hasScore) sc = `<span class="match-score${isLive?' live-score':''}">${m.hScore}:${m.aScore}</span>`;
+  if (hasScore) {
+    const pen = PEN_SCORES[m.id];
+    const penHtml = pen ? `<span style="font-size:11px;color:#888;margin-left:4px">(пен. ${pen[0]}:${pen[1]})</span>` : '';
+    sc = `<span class="match-score${isLive?' live-score':''}">${m.hScore}:${m.aScore}</span>${penHtml}`;
+  }
 
   let h = `<div class="match ${isLive?'live':''} ${m.placeholder?'placeholder':''}">
     <div class="match-top">
@@ -262,7 +276,7 @@ function card(m) {
     PLAYERS.forEach((p,i) => {
       const pred = pr&&pr[p];
       let pt = null;
-      if (pred&&hasScore&&m.finished) pt = pts(pred[0],pred[1],m.hScore,m.aScore);
+      if (pred&&hasScore&&m.finished) { const ft=FT_SCORES[m.id]; pt = pts(pred[0],pred[1],ft?ft[0]:m.hScore,ft?ft[1]:m.aScore); }
       const ptH = pt!==null ? `<span class="pred-pts pts-${pt}">(${pt})</span>` : '';
       const sStr = pred ? `${pred[0]}:${pred[1]}` : '—';
       h += `<div class="pred"><div class="pred-name">${SHORT[i]}</div><span class="pred-score${pred?'':' pred-empty'}">${sStr}</span>${ptH}</div>`;
@@ -319,7 +333,7 @@ function renderLB() {
     fin.forEach(m => {
       const pr = PREDICTIONS[m.id]&&PREDICTIONS[m.id][p];
       if (!pr) return;
-      const pt = pts(pr[0],pr[1],m.hScore,m.aScore);
+      const ft=FT_SCORES[m.id]; const pt = pts(pr[0],pr[1],ft?ft[0]:m.hScore,ft?ft[1]:m.aScore);
       if(pt===3){e++;t+=3;}else if(pt===2){d++;t+=2;}else if(pt===1){o++;t+=1;}else if(pt===0){w++;}
     });
     return {name:SHORT[PLAYERS.indexOf(p)],t,e,d,o,w};
