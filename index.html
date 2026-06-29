@@ -141,7 +141,7 @@
 
 <script>
 const PLAYERS = ['Валерий','Тома','Николай','Ольга','Алексей','Ксения'];
-const SHORT  = ['Валера','Тома','Коля','Оля','Лёха','Ксю'];
+const SHORT  = ['\u{1F42F}Валера','\u{1F431}Тома','\u{1F436}Коля','\u{1F41D}Оля','\u{1F42C}Лёха','\u{1F427}Ксю'];
 
 // =============================================
 // ПРОГНОЗЫ — Ксения вносит вручную и пушит
@@ -250,7 +250,7 @@ function card(m) {
 
   let h = `<div class="match ${isLive?'live':''} ${m.placeholder?'placeholder':''}">
     <div class="match-top">
-      <div class="match-teams">${m.home} ${sc} ${m.away}</div>
+      <div class="match-teams">${flag(m.homeEn)} ${m.home} ${sc} ${m.away} ${flag(m.awayEn)}</div>
       <div class="match-meta"><span>${fmt(m.utcMs)}</span>${badge}</div>
     </div>`;
 
