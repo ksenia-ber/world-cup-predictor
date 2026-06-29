@@ -75,9 +75,8 @@
 
   /* Bracket */
   .bracket-wrap { overflow-x: auto; padding-bottom: 16px; }
-  .bracket-outer { display: flex; align-items: flex-start; min-width: 1400px; }
-  .bracket-half { display: flex; gap: 0; align-items: flex-start; flex: 1; }
-  .bracket-half.right { flex-direction: row-reverse; }
+  .bracket-half { display: flex; gap: 0; align-items: flex-start; min-width: 600px; margin-bottom: 8px; }
+  .bracket-half-label { font-size: 12px; color: #666; margin: 12px 0 4px 6px; }
   .bracket-round { display: flex; flex-direction: column; min-width: 155px; flex-shrink: 0; }
   .bracket-round-title { font-size: 11px; color: #e94560; text-align: center; padding: 6px 0 8px; font-weight: 600; }
   .bracket-match { background: #151525; border: 1px solid #222; border-radius: 6px; margin: 4px 6px; font-size: 11px; overflow: hidden; }
@@ -92,7 +91,7 @@
   .bm-winner .bm-name { font-weight: 700; }
   .bm-loser { opacity: 0.45; }
   .bracket-spacer { flex: 1; min-height: 8px; }
-  .bracket-center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 0 10px; min-width: 210px; flex-shrink: 0; }
+  .bracket-center { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 8px 6px; }
   .bracket-center-label { font-size: 12px; color: #e94560; font-weight: 600; }
   .bracket-center .bracket-match { min-width: 200px; margin: 0; }
   .bracket-divider { text-align: center; font-size: 12px; color: #444; margin: 8px 0; border-top: 1px solid #222; padding-top: 8px; }
@@ -362,7 +361,9 @@ function renderBracket() {
   // Left half: feeds into SF 101
   // QF97 ← R16-89(R32: 74,77) + R16-90(R32: 73,75)
   // QF98 ← R16-93(R32: 83,84) + R16-94(R32: 81,82)
-  let html = '<div class="bracket-wrap"><div class="bracket-outer">';
+  let html = '<div class="bracket-wrap">';
+
+  html += '<div class="bracket-half-label">Верхняя сетка → Полуфинал 1</div>';
   html += '<div class="bracket-half">';
   html += col('1/16', ['74','77','73','75','83','84','81','82'], 2);
   html += col('1/8', ['89','90','93','94'], 40);
@@ -370,7 +371,14 @@ function renderBracket() {
   html += col('1/2', ['101'], 0);
   html += '</div>';
 
-  // Center: Final + 3rd place
+  html += '<div class="bracket-half-label">Нижняя сетка → Полуфинал 2</div>';
+  html += '<div class="bracket-half">';
+  html += col('1/16', ['76','78','79','80','86','88','85','87'], 2);
+  html += col('1/8', ['91','92','95','96'], 40);
+  html += col('1/4', ['99','100'], 115);
+  html += col('1/2', ['102'], 0);
+  html += '</div>';
+
   html += '<div class="bracket-center">';
   html += '<div class="bracket-center-label">Финал</div>';
   html += bmCard(getM('104'));
@@ -378,17 +386,7 @@ function renderBracket() {
   html += bmCard(getM('103'));
   html += '</div>';
 
-  // Right half: feeds into SF 102
-  // QF99 ← R16-91(R32: 76,78) + R16-92(R32: 79,80)
-  // QF100 ← R16-95(R32: 86,88) + R16-96(R32: 85,87)
-  html += '<div class="bracket-half right">';
-  html += col('1/16', ['76','78','79','80','86','88','85','87'], 2);
-  html += col('1/8', ['91','92','95','96'], 40);
-  html += col('1/4', ['99','100'], 115);
-  html += col('1/2', ['102'], 0);
   html += '</div>';
-
-  html += '</div></div>';
   document.getElementById('panel-bracket').innerHTML = html;
 }
 
