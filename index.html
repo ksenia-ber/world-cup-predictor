@@ -227,19 +227,29 @@ function card(m) {
   return h + `</div>`;
 }
 
+function isToday(utcMs) {
+  const now = new Date(), d = new Date(utcMs);
+  return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
+}
+
 function render() {
   const rf = document.getElementById('round-filter').value;
   const filtered = matches.filter(m => rf==='all' || m.round===rf);
-  let cur='', past='', cR='', pR='';
-  filtered.forEach(m => {
-    if (m.finished) {
-      if (m.round!==pR) { pR=m.round; past+=`<div class="round-label">${m.round}</div>`; }
-      past += card(m);
-    } else {
-      if (m.round!==cR) { cR=m.round; cur+=`<div class="round-label">${m.round}</div>`; }
-      cur += card(m);
-    }
+  const curMatches = filtered.filter(m => !m.finished || isToday(m.utcMs));
+  const pastMatches = filtered.filter(m => m.finished && !isToday(m.utcMs)).slice().sort((a,b) => b.utcMs - a.utcMs);
+
+  let cur='', cR='';
+  curMatches.forEach(m => {
+    if (m.round!==cR) { cR=m.round; cur+=`<div class="round-label">${m.round}</div>`; }
+    cur += card(m);
   });
+
+  let past='', pR='';
+  pastMatches.forEach(m => {
+    if (m.round!==pR) { pR=m.round; past+=`<div class="round-label">${m.round}</div>`; }
+    past += card(m);
+  });
+
   document.getElementById('panel-current').innerHTML = cur||'<p style="color:#666;text-align:center;padding:40px">Нет текущих матчей</p>';
   document.getElementById('panel-past').innerHTML = past||'<p style="color:#666;text-align:center;padding:40px">Нет завершённых матчей</p>';
   renderLB();
