@@ -121,7 +121,7 @@
     <div class="tab" onclick="showTab('leaderboard')">Таблица</div>
   </div>
 
-  <div style="margin-bottom:12px">
+  <div id="round-filter-wrap" style="margin-bottom:12px">
     <select id="round-filter" onchange="render()" style="padding:6px 10px;border-radius:8px;border:1px solid #333;background:#0a0e1a;color:#fff;font-size:13px;">
       <option value="all" selected>Все раунды</option>
       <option value="1/16 финала">1/16 финала</option>
@@ -233,6 +233,7 @@ function showTab(name) {
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   event.target.classList.add('active');
   document.getElementById('panel-'+name).classList.add('active');
+  document.getElementById('round-filter-wrap').style.display = (name==='current'||name==='past') ? '' : 'none';
 }
 
 function card(m) {
@@ -276,8 +277,10 @@ function isToday(utcMs) {
 function render() {
   const rf = document.getElementById('round-filter').value;
   const filtered = matches.filter(m => rf==='all' || m.round===rf);
-  const curMatches = filtered.filter(m => !m.finished || isToday(m.utcMs));
-  const pastMatches = filtered.filter(m => m.finished && !isToday(m.utcMs)).slice().sort((a,b) => b.utcMs - a.utcMs);
+  const isLiveMatch = m => m.elapsed&&m.elapsed!=='notstarted'&&!m.finished;
+  const isCurrent = m => !m.finished || isLiveMatch(m) || isToday(m.utcMs);
+  const curMatches = filtered.filter(m => isCurrent(m));
+  const pastMatches = filtered.filter(m => !isCurrent(m)).slice().sort((a,b) => b.utcMs - a.utcMs);
 
   let cur='', cR='';
   curMatches.forEach(m => {
