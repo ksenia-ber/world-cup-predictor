@@ -285,13 +285,19 @@ async function fetchAPI() {
         const real = x.home_team_name_en&&!x.home_team_name_en.startsWith('Winner')&&!x.home_team_name_en.startsWith('Loser')&&!x.home_team_name_en.startsWith('TBD')&&x.home_team_id!=='0'&&x.home_team_id!==0;
         return {id:x.id||x._id, round:ROUND_MAP[x.type], home:real?tr(x.home_team_name_en):trL(x.home_team_label), away:real?tr(x.away_team_name_en):trL(x.away_team_label), utcMs:toUTC(x.local_date||'',x.stadium_id), hScore:x.home_score, aScore:x.away_score, finished:x.finished===true||x.finished==='TRUE'||x.finished==='true', elapsed:x.time_elapsed||'notstarted', placeholder:!real};
       }).sort((a,b)=>a.utcMs-b.utcMs);
-      dot.className='status-dot status-live'; st.textContent='Live'; up.textContent=fmt(Date.now());
-      render(); return;
+      dot.className='status-dot status-live'; up.textContent=fmt(Date.now());
+      const hasLive = matches.some(m=>m.elapsed&&m.elapsed!=='notstarted'&&!m.finished);
+      st.textContent = hasLive ? 'Live · авто-обновление' : 'Live';
+      render();
+      if (hasLive && !liveTimer) liveTimer = setInterval(fetchAPI, 60000);
+      else if (!hasLive && liveTimer) { clearInterval(liveTimer); liveTimer = null; }
+      return;
     } catch(e) {}
   }
   dot.className='status-dot status-off'; st.textContent='Офлайн';
 }
 
+let liveTimer = null;
 fetchAPI();
 </script>
 </body>
