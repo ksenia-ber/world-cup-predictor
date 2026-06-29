@@ -276,7 +276,7 @@ function card(m) {
     PLAYERS.forEach((p,i) => {
       const pred = pr&&pr[p];
       let pt = null;
-      if (pred&&hasScore&&m.finished) { const ft=FT_SCORES[m.id]; pt = pts(pred[0],pred[1],ft?ft[0]:m.hScore,ft?ft[1]:m.aScore); }
+      if (pred&&hasScore&&(m.finished||FT_SCORES[m.id])) { const ft=FT_SCORES[m.id]; pt = pts(pred[0],pred[1],ft?ft[0]:m.hScore,ft?ft[1]:m.aScore); }
       const ptH = pt!==null ? `<span class="pred-pts pts-${pt}">(${pt})</span>` : '';
       const sStr = pred ? `${pred[0]}:${pred[1]}` : '—';
       h += `<div class="pred"><div class="pred-name">${SHORT[i]}</div><span class="pred-score${pred?'':' pred-empty'}">${sStr}</span>${ptH}</div>`;
@@ -327,7 +327,7 @@ function render() {
 }
 
 function renderLB() {
-  const fin = matches.filter(m=>m.finished);
+  const fin = matches.filter(m=>m.finished||FT_SCORES[m.id]);
   const st = PLAYERS.map(p => {
     let t=0,e=0,d=0,o=0,w=0;
     fin.forEach(m => {
