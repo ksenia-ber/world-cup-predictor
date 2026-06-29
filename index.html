@@ -153,7 +153,7 @@ const FT_SCORES = {
 
 // Пенальти — формат: 'matchId': [дома, гости]
 const PEN_SCORES = {
-  // '74': [4,2],
+  '74': [3,4],
 };
 
 // =============================================
@@ -259,7 +259,7 @@ function card(m) {
   else if (m.finished) badge = `<span class="finished-badge">завершён</span>`;
 
   let sc = '<span class="vs">—</span>';
-  if (hasScore) {
+  if (hasScore || PEN_SCORES[m.id]) {
     const pen = PEN_SCORES[m.id];
     const penHtml = pen ? `<span style="font-size:11px;color:#888;margin-left:4px">(пен. ${pen[0]}:${pen[1]})</span>` : '';
     sc = `<span class="match-score${isLive?' live-score':''}">${m.hScore}:${m.aScore}</span>${penHtml}`;
