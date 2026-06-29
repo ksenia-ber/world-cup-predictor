@@ -73,6 +73,25 @@
   .dot-2 { background: #ff9800; }
   .dot-1 { background: #9c27b0; }
 
+  /* Bracket */
+  .bracket-wrap { overflow-x: auto; padding-bottom: 16px; }
+  .bracket { display: flex; gap: 0; min-width: 900px; align-items: flex-start; }
+  .bracket-round { display: flex; flex-direction: column; min-width: 155px; }
+  .bracket-round-title { font-size: 11px; color: #e94560; text-align: center; padding: 6px 0 8px; font-weight: 600; }
+  .bracket-match { background: #151525; border: 1px solid #222; border-radius: 6px; margin: 4px 6px; font-size: 11px; overflow: hidden; }
+  .bracket-match.live { border-color: #4caf50; }
+  .bracket-match.placeholder { opacity: 0.35; border-style: dashed; }
+  .bm-team { display: flex; align-items: center; padding: 4px 6px; gap: 4px; }
+  .bm-team:first-child { border-bottom: 1px solid #1a1a2e; }
+  .bm-flag { font-size: 14px; line-height: 1; }
+  .bm-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+  .bm-score { font-weight: 700; font-size: 12px; min-width: 14px; text-align: right; }
+  .bm-score.live-sc { color: #4caf50; }
+  .bm-winner .bm-name { font-weight: 700; }
+  .bm-loser { opacity: 0.45; }
+  .bracket-spacer { flex: 1; min-height: 8px; }
+  .bracket-connector { display: flex; flex-direction: column; justify-content: space-around; width: 12px; }
+
   @media (max-width: 600px) {
     .match-top { padding: 8px 10px; }
     .match-teams { font-size: 13px; }
@@ -99,6 +118,7 @@
   <div class="tabs">
     <div class="tab active" onclick="showTab('current')">Текущие и предстоящие</div>
     <div class="tab" onclick="showTab('past')">Завершённые</div>
+    <div class="tab" onclick="showTab('bracket')">Сетка</div>
     <div class="tab" onclick="showTab('leaderboard')">Таблица</div>
   </div>
 
@@ -116,6 +136,7 @@
 
   <div id="panel-current" class="panel active"></div>
   <div id="panel-past" class="panel"></div>
+  <div id="panel-bracket" class="panel"></div>
   <div id="panel-leaderboard" class="panel"></div>
 </div>
 
@@ -156,6 +177,27 @@ const TEAM_RU = {
   'Ukraine':'Украина','Hungary':'Венгрия','Georgia':'Грузия','Russia':'Россия','Congo':'Конго',
 };
 
+const FLAGS = {
+  'Mexico':'\u{1F1F2}\u{1F1FD}','South Africa':'\u{1F1FF}\u{1F1E6}','South Korea':'\u{1F1F0}\u{1F1F7}','Czech Republic':'\u{1F1E8}\u{1F1FF}',
+  'United States':'\u{1F1FA}\u{1F1F8}','Paraguay':'\u{1F1F5}\u{1F1FE}','Haiti':'\u{1F1ED}\u{1F1F9}','Scotland':'\u{1F3F4}\u{E0067}\u{E0062}\u{E0073}\u{E0063}\u{E0074}\u{E007F}',
+  'Australia':'\u{1F1E6}\u{1F1FA}','Turkey':'\u{1F1F9}\u{1F1F7}','Brazil':'\u{1F1E7}\u{1F1F7}','Japan':'\u{1F1EF}\u{1F1F5}',
+  'Germany':'\u{1F1E9}\u{1F1EA}','Netherlands':'\u{1F1F3}\u{1F1F1}','Morocco':'\u{1F1F2}\u{1F1E6}','France':'\u{1F1EB}\u{1F1F7}',
+  'Sweden':'\u{1F1F8}\u{1F1EA}','England':'\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}','DR Congo':'\u{1F1E8}\u{1F1E9}','Democratic Republic of the Congo':'\u{1F1E8}\u{1F1E9}',
+  'Belgium':'\u{1F1E7}\u{1F1EA}','Senegal':'\u{1F1F8}\u{1F1F3}','Spain':'\u{1F1EA}\u{1F1F8}','Austria':'\u{1F1E6}\u{1F1F9}',
+  'Portugal':'\u{1F1F5}\u{1F1F9}','Croatia':'\u{1F1ED}\u{1F1F7}','Switzerland':'\u{1F1E8}\u{1F1ED}','Algeria':'\u{1F1E9}\u{1F1FF}',
+  'Egypt':'\u{1F1EA}\u{1F1EC}','Argentina':'\u{1F1E6}\u{1F1F7}','Cabo Verde':'\u{1F1E8}\u{1F1FB}','Cape Verde':'\u{1F1E8}\u{1F1FB}',
+  'Colombia':'\u{1F1E8}\u{1F1F4}','Ghana':'\u{1F1EC}\u{1F1ED}','Canada':'\u{1F1E8}\u{1F1E6}','Ecuador':'\u{1F1EA}\u{1F1E8}',
+  'Norway':'\u{1F1F3}\u{1F1F4}','Ivory Coast':'\u{1F1E8}\u{1F1EE}',"Côte d'Ivoire":'\u{1F1E8}\u{1F1EE}',"Cote d'Ivoire":'\u{1F1E8}\u{1F1EE}',
+  'Bosnia and Herzegovina':'\u{1F1E7}\u{1F1E6}','Bosnia & Herzegovina':'\u{1F1E7}\u{1F1E6}',
+  'Iran':'\u{1F1EE}\u{1F1F7}','Serbia':'\u{1F1F7}\u{1F1F8}','Denmark':'\u{1F1E9}\u{1F1F0}','Wales':'\u{1F3F4}\u{E0067}\u{E0062}\u{E0077}\u{E006C}\u{E0073}\u{E007F}',
+  'Poland':'\u{1F1F5}\u{1F1F1}','Uruguay':'\u{1F1FA}\u{1F1FE}','Chile':'\u{1F1E8}\u{1F1F1}','Peru':'\u{1F1F5}\u{1F1EA}',
+  'Nigeria':'\u{1F1F3}\u{1F1EC}','Cameroon':'\u{1F1E8}\u{1F1F2}','Tunisia':'\u{1F1F9}\u{1F1F3}',
+  'Saudi Arabia':'\u{1F1F8}\u{1F1E6}','Qatar':'\u{1F1F6}\u{1F1E6}','Panama':'\u{1F1F5}\u{1F1E6}',
+  'Italy':'\u{1F1EE}\u{1F1F9}','Romania':'\u{1F1F7}\u{1F1F4}','Greece':'\u{1F1EC}\u{1F1F7}',
+  'Ukraine':'\u{1F1FA}\u{1F1E6}','Hungary':'\u{1F1ED}\u{1F1FA}','Georgia':'\u{1F1EC}\u{1F1EA}','Russia':'\u{1F1F7}\u{1F1FA}',
+};
+function flag(enName) { return FLAGS[enName]||''; }
+
 const ROUND_MAP = {'r32':'1/16 финала','r16':'1/8 финала','qf':'Четвертьфинал','sf':'Полуфинал','third':'Матч за 3-е место','final':'Финал'};
 const STADIUM_UTC = {'1':-5,'2':-5,'3':-5,'4':-5,'5':-5,'6':-5,'7':-4,'8':-4,'9':-4,'10':-4,'11':-4,'12':-4,'13':-7,'14':-7,'15':-7,'16':-7};
 
@@ -185,7 +227,7 @@ function pts(ph,pa,ah,aa) {
   return 1;
 }
 
-let matches = [];
+let matches = [], allKO = [];
 
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -253,6 +295,7 @@ function render() {
   document.getElementById('panel-current').innerHTML = cur||'<p style="color:#666;text-align:center;padding:40px">Нет текущих матчей</p>';
   document.getElementById('panel-past').innerHTML = past||'<p style="color:#666;text-align:center;padding:40px">Нет завершённых матчей</p>';
   renderLB();
+  renderBracket();
 }
 
 function renderLB() {
@@ -281,6 +324,71 @@ function renderLB() {
   document.getElementById('panel-leaderboard').innerHTML = h+'</div>';
 }
 
+// Bracket layout: two halves of the draw
+const BRACKET_TOP = [['73','76'],['74','75'],['78','77'],['79','80']];
+const BRACKET_BOT = [['81','82'],['83','84'],['85','86'],['87','88']];
+const R16_TOP = ['89','90','91','92'];
+const R16_BOT = ['93','94','95','96'];
+const QF_TOP = ['97','99'];
+const QF_BOT = ['98','100'];
+const SF_IDS = ['101','102'];
+const FINAL_ID = '104';
+const THIRD_ID = '103';
+
+function bmTeam(name, enName, score, isWinner, isLoser, isLive) {
+  const f = flag(enName);
+  const cls = isWinner?'bm-winner':isLoser?'bm-loser':'';
+  const scCls = isLive?'live-sc':'';
+  const sc = score!=null&&score!==''?`<span class="bm-score ${scCls}">${score}</span>`:'';
+  return `<div class="bm-team ${cls}">${f?`<span class="bm-flag">${f}</span>`:''}<span class="bm-name">${name}</span>${sc}</div>`;
+}
+
+function bmCard(m) {
+  if (!m) return '<div class="bracket-match placeholder"><div class="bm-team"><span class="bm-name">—</span></div><div class="bm-team"><span class="bm-name">—</span></div></div>';
+  const isLive = m.elapsed&&m.elapsed!=='notstarted'&&!m.finished;
+  const hasScore = m.hScore!=null&&m.aScore!=null&&(isLive||m.finished);
+  const hWin = m.finished&&hasScore&&+m.hScore>+m.aScore;
+  const aWin = m.finished&&hasScore&&+m.aScore>+m.hScore;
+  const cls = m.placeholder?'placeholder':isLive?'live':'';
+  return `<div class="bracket-match ${cls}">${bmTeam(m.home,m.homeEn,hasScore?m.hScore:null,hWin,aWin,isLive)}${bmTeam(m.away,m.awayEn,hasScore?m.aScore:null,aWin,hWin,isLive)}</div>`;
+}
+
+function getM(id) { return allKO.find(m=>String(m.id)===String(id)); }
+
+function renderBracket() {
+  function col(title, ids, spacing) {
+    let h = `<div class="bracket-round"><div class="bracket-round-title">${title}</div>`;
+    ids.forEach((id,i) => {
+      if (spacing && i>0) h += `<div class="bracket-spacer" style="min-height:${spacing}px"></div>`;
+      h += bmCard(getM(id));
+    });
+    return h+'</div>';
+  }
+
+  // Top half
+  const r32Top = BRACKET_TOP.flat();
+  const r32Bot = BRACKET_BOT.flat();
+
+  let html = '<div class="bracket-wrap"><div class="bracket">';
+  // R32
+  html += col('1/16', r32Top.concat(r32Bot), 2);
+  // R16
+  html += col('1/8', R16_TOP.concat(R16_BOT), 40);
+  // QF
+  html += col('1/4', QF_TOP.concat(QF_BOT), 115);
+  // SF
+  html += col('1/2', SF_IDS, 250);
+  // Final + 3rd
+  html += `<div class="bracket-round" style="min-width:170px"><div class="bracket-round-title">Финал / 3-е место</div>`;
+  html += bmCard(getM(FINAL_ID));
+  html += `<div class="bracket-spacer" style="min-height:80px"></div>`;
+  html += bmCard(getM(THIRD_ID));
+  html += `</div>`;
+  html += '</div></div>';
+
+  document.getElementById('panel-bracket').innerHTML = html;
+}
+
 async function fetchAPI() {
   const dot=document.getElementById('api-dot'), st=document.getElementById('api-status'), up=document.getElementById('last-update');
   const px=[u=>u, u=>'https://corsproxy.io/?'+encodeURIComponent(u), u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)];
@@ -291,10 +399,12 @@ async function fetchAPI() {
       const d = await r.json();
       const g = Array.isArray(d)?d:(d.games||d.data||[]);
       if (!g.length) continue;
-      matches = g.filter(x=>ROUND_MAP[x.type]).map(x => {
-        const real = x.home_team_name_en&&!x.home_team_name_en.startsWith('Winner')&&!x.home_team_name_en.startsWith('Loser')&&!x.home_team_name_en.startsWith('TBD')&&x.home_team_id!=='0'&&x.home_team_id!==0;
-        return {id:x.id||x._id, round:ROUND_MAP[x.type], home:real?tr(x.home_team_name_en):trL(x.home_team_label), away:real?tr(x.away_team_name_en):trL(x.away_team_label), utcMs:toUTC(x.local_date||'',x.stadium_id), hScore:x.home_score, aScore:x.away_score, finished:x.finished===true||x.finished==='TRUE'||x.finished==='true', elapsed:x.time_elapsed||'notstarted', placeholder:!real};
-      }).sort((a,b)=>a.utcMs-b.utcMs);
+      allKO = g.filter(x=>ROUND_MAP[x.type]).map(x => {
+        function realName(en,id) { return en&&!en.startsWith('Winner')&&!en.startsWith('Loser')&&!en.startsWith('TBD')&&id!=='0'&&id!==0; }
+        const hReal = realName(x.home_team_name_en,x.home_team_id), aReal = realName(x.away_team_name_en,x.away_team_id);
+        return {id:x.id||x._id, type:x.type, round:ROUND_MAP[x.type], home:hReal?tr(x.home_team_name_en):trL(x.home_team_label), away:aReal?tr(x.away_team_name_en):trL(x.away_team_label), homeEn:hReal?x.home_team_name_en:'', awayEn:aReal?x.away_team_name_en:'', utcMs:toUTC(x.local_date||'',x.stadium_id), hScore:x.home_score, aScore:x.away_score, finished:x.finished===true||x.finished==='TRUE'||x.finished==='true', elapsed:x.time_elapsed||'notstarted', placeholder:!hReal&&!aReal};
+      });
+      matches = allKO.slice().sort((a,b)=>a.utcMs-b.utcMs);
       dot.className='status-dot status-live'; up.textContent=fmt(Date.now());
       const hasLive = matches.some(m=>m.elapsed&&m.elapsed!=='notstarted'&&!m.finished);
       st.textContent = hasLive ? 'Live · авто-обновление' : 'Live';
