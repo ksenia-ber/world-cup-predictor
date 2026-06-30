@@ -261,8 +261,12 @@ function card(m) {
   let sc = '<span class="vs">—</span>';
   if (hasScore || PEN_SCORES[m.id]) {
     const pen = PEN_SCORES[m.id];
-    const penHtml = pen ? `<span style="font-size:11px;color:#888;margin-left:4px">(пен. ${pen[0]}:${pen[1]})</span>` : '';
-    sc = `<span class="match-score${isLive?' live-score':''}">${m.hScore}:${m.aScore}</span>${penHtml}`;
+    const cls = isLive ? ' live-score' : '';
+    if (pen) {
+      sc = `<span class="match-score${cls}">${m.hScore}<span style="font-size:12px;color:#aaa">(${pen[0]})</span> — ${m.aScore}<span style="font-size:12px;color:#aaa">(${pen[1]})</span></span>`;
+    } else {
+      sc = `<span class="match-score${cls}">${m.hScore}:${m.aScore}</span>`;
+    }
   }
 
   let h = `<div class="match ${isLive?'live':''} ${m.placeholder?'placeholder':''}">
@@ -352,22 +356,24 @@ function renderLB() {
   document.getElementById('panel-leaderboard').innerHTML = h+'</div>';
 }
 
-function bmTeam(name, enName, score, isWinner, isLoser, isLive) {
+function bmTeam(name, enName, score, penScore, isWinner, isLoser, isLive) {
   const f = flag(enName);
   const cls = isWinner?'bm-winner':isLoser?'bm-loser':'';
   const scCls = isLive?'live-sc':'';
-  const sc = score!=null&&score!==''?`<span class="bm-score ${scCls}">${score}</span>`:'';
+  const penHtml = penScore!=null ? `<span style="font-size:9px;color:#aaa">(${penScore})</span>` : '';
+  const sc = score!=null&&score!==''?`<span class="bm-score ${scCls}">${score}</span>${penHtml}`:'';
   return `<div class="bm-team ${cls}">${f?`<span class="bm-flag">${f}</span>`:''}<span class="bm-name">${name}</span>${sc}</div>`;
 }
 
 function bmCard(m) {
   if (!m) return '<div class="bracket-match placeholder"><div class="bm-team"><span class="bm-name">—</span></div><div class="bm-team"><span class="bm-name">—</span></div></div>';
   const isLive = m.elapsed&&m.elapsed!=='notstarted'&&!m.finished;
-  const hasScore = m.hScore!=null&&m.aScore!=null&&(isLive||m.finished);
-  const hWin = m.finished&&hasScore&&+m.hScore>+m.aScore;
-  const aWin = m.finished&&hasScore&&+m.aScore>+m.hScore;
+  const hasScore = m.hScore!=null&&m.aScore!=null&&(isLive||m.finished||PEN_SCORES[m.id]);
+  const pen = PEN_SCORES[m.id];
+  const hWin = hasScore&&(+m.hScore>+m.aScore||(pen&&pen[0]>pen[1]));
+  const aWin = hasScore&&(+m.aScore>+m.hScore||(pen&&pen[1]>pen[0]));
   const cls = m.placeholder?'placeholder':isLive?'live':'';
-  return `<div class="bracket-match ${cls}">${bmTeam(m.home,m.homeEn,hasScore?m.hScore:null,hWin,aWin,isLive)}${bmTeam(m.away,m.awayEn,hasScore?m.aScore:null,aWin,hWin,isLive)}</div>`;
+  return `<div class="bracket-match ${cls}">${bmTeam(m.home,m.homeEn,hasScore?m.hScore:null,pen?pen[0]:null,hWin,aWin,isLive)}${bmTeam(m.away,m.awayEn,hasScore?m.aScore:null,pen?pen[1]:null,aWin,hWin,isLive)}</div>`;
 }
 
 function getM(id) { return allKO.find(m=>String(m.id)===String(id)); }
