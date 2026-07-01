@@ -271,8 +271,11 @@ function card(m) {
   if (hasScore || PEN_SCORES[m.id]) {
     const pen = PEN_SCORES[m.id];
     const cls = isLive ? ' live-score' : '';
+    const ft = FT_SCORES[m.id];
     if (pen) {
       sc = `<span class="match-score${cls}">${m.hScore}<span style="font-size:12px;color:#aaa">(${pen[0]})</span> — ${m.aScore}<span style="font-size:12px;color:#aaa">(${pen[1]})</span></span>`;
+    } else if (ft && (m.hScore!=ft[0]||m.aScore!=ft[1])) {
+      sc = `<span class="match-score${cls}">${m.hScore}:${m.aScore}<span style="font-size:12px;color:#aaa"> (О.В. ${ft[0]}:${ft[1]})</span></span>`;
     } else {
       sc = `<span class="match-score${cls}">${m.hScore}:${m.aScore}</span>`;
     }
