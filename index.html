@@ -287,6 +287,8 @@ function pts(ph,pa,ah,aa) {
 let matches = [], allKO = [];
 
 function getPred(m) { return PREDICTIONS[m.id] || PREDICTIONS_BY_TEAMS[m.homeEn+'|'+m.awayEn]; }
+function getFT(m)   { return m.ftScore  || FT_SCORES[m.id]  || null; }
+function getPen(m)  { return m.penScore || PEN_SCORES[m.id] || null; }
 
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -306,10 +308,9 @@ function card(m) {
   else if (m.finished) badge = `<span class="finished-badge">завершён</span>`;
 
   let sc = '<span class="vs">—</span>';
-  if (hasScore || PEN_SCORES[m.id]) {
-    const pen = PEN_SCORES[m.id];
+  const pen = getPen(m), ft = getFT(m);
+  if (hasScore || pen) {
     const cls = isLive ? ' live-score' : '';
-    const ft = FT_SCORES[m.id];
     if (pen) {
       sc = `<span class="match-score${cls}">${m.hScore}<span style="font-size:12px;color:#aaa">(${pen[0]})</span> — ${m.aScore}<span style="font-size:12px;color:#aaa">(${pen[1]})</span></span>`;
     } else if (ft && (m.hScore!=ft[0]||m.aScore!=ft[1])) {
@@ -330,7 +331,7 @@ function card(m) {
     PLAYERS.forEach((p,i) => {
       const pred = pr&&pr[p];
       let pt = null;
-      if (pred&&hasScore&&(m.finished||FT_SCORES[m.id])) { const ft=FT_SCORES[m.id]; pt = pts(pred[0],pred[1],ft?ft[0]:m.hScore,ft?ft[1]:m.aScore); }
+      if (pred&&hasScore&&m.finished) { pt = pts(pred[0],pred[1],ft?ft[0]:m.hScore,ft?ft[1]:m.aScore); }
       const ptH = pt!==null ? `<span class="pred-pts pts-${pt}">(${pt})</span>` : '';
       const sStr = pred ? `${pred[0]}:${pred[1]}` : '—';
       h += `<div class="pred"><div class="pred-name">${SHORT[i]}</div><span class="pred-score${pred?'':' pred-empty'}">${sStr}</span>${ptH}</div>`;
@@ -381,13 +382,13 @@ function render() {
 }
 
 function renderLB() {
-  const fin = matches.filter(m=>m.finished||FT_SCORES[m.id]);
+  const fin = matches.filter(m=>m.finished);
   const st = PLAYERS.map(p => {
     let t=0,e=0,d=0,o=0,w=0;
     fin.forEach(m => {
       const preds = getPred(m); const pr = preds&&preds[p];
       if (!pr) return;
-      const ft=FT_SCORES[m.id]; const pt = pts(pr[0],pr[1],ft?ft[0]:m.hScore,ft?ft[1]:m.aScore);
+      const ft=getFT(m); const pt = pts(pr[0],pr[1],ft?ft[0]:m.hScore,ft?ft[1]:m.aScore);
       if(pt===3){e++;t+=3;}else if(pt===2){d++;t+=2;}else if(pt===1){o++;t+=1;}else if(pt===0){w++;}
     });
     return {name:SHORT[PLAYERS.indexOf(p)],t,e,d,o,w};
@@ -409,8 +410,7 @@ function renderLB() {
   playerOrder.forEach(s => { bd += `<th>${s}</th>`; });
   bd += `</tr></thead><tbody>`;
   [...fin].sort((a,b)=>b.utcMs-a.utcMs).forEach(m => {
-    const ft = FT_SCORES[m.id];
-    const pen = PEN_SCORES[m.id];
+    const ft = getFT(m), pen = getPen(m);
     const hS = ft ? ft[0] : m.hScore, aS = ft ? ft[1] : m.aScore;
     let scoreStr = `${m.hScore}:${m.aScore}`;
     if (pen) scoreStr += ` (пен. ${pen[0]}:${pen[1]})`;
@@ -488,40 +488,14 @@ function renderBracket() {
 
 async function fetchAPI() {
   const dot=document.getElementById('api-dot'), st=document.getElementById('api-status'), up=document.getElementById('last-update');
-  const px=[u=>u, u=>'https://corsproxy.io/?'+encodeURIComponent(u), u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)];
-  for (const p of px) {
-    try {
-      const r = await fetch(p('https://worldcup26.ir/get/games'),{signal:AbortSignal.timeout(8000)});
-      if (!r.ok) continue;
-      const d = await r.json();
-      const g = Array.isArray(d)?d:(d.games||d.data||[]);
-      if (!g.length) continue;
-      allKO = g.filter(x=>ROUND_MAP[x.type]).map(x => {
-        function realName(en,id) { return en&&!en.startsWith('Winner')&&!en.startsWith('Loser')&&!en.startsWith('TBD')&&id!=='0'&&id!==0; }
-        const hReal = realName(x.home_team_name_en,x.home_team_id), aReal = realName(x.away_team_name_en,x.away_team_id);
-        return {id:x.id||x._id, type:x.type, round:ROUND_MAP[x.type], home:hReal?tr(x.home_team_name_en):trL(x.home_team_label), away:aReal?tr(x.away_team_name_en):trL(x.away_team_label), homeEn:hReal?x.home_team_name_en:'', awayEn:aReal?x.away_team_name_en:'', utcMs:toUTC(x.local_date||'',x.stadium_id), hScore:x.home_score, aScore:x.away_score, finished:x.finished===true||x.finished==='TRUE'||x.finished==='true', elapsed:x.time_elapsed||'notstarted', placeholder:!hReal&&!aReal};
-      });
-      allKO.forEach(m => { if (SCORE_OVERRIDES[m.id]) { m.hScore=SCORE_OVERRIDES[m.id][0]; m.aScore=SCORE_OVERRIDES[m.id][1]; m.finished=true; } });
-      matches = allKO.slice().sort((a,b)=>a.utcMs-b.utcMs);
-      try { localStorage.setItem('wc26_cache', JSON.stringify(matches)); } catch(e) {}
-      dot.className='status-dot status-live'; up.textContent=fmt(Date.now());
-      const hasLive = matches.some(m=>m.elapsed&&m.elapsed!=='notstarted'&&!m.finished);
-      st.textContent = hasLive ? 'Live · авто-обновление' : 'Live';
-      render();
-      if (hasLive && !liveTimer) liveTimer = setInterval(fetchAPI, 60000);
-      else if (!hasLive && liveTimer) { clearInterval(liveTimer); liveTimer = null; }
-      return;
-    } catch(e) {}
-  }
-  // Try ESPN fallback
   try {
     const espnMatches = await fetchESPN();
     if (espnMatches.length) {
       matches = espnMatches;
       try { localStorage.setItem('wc26_cache', JSON.stringify(matches)); } catch(e) {}
-      dot.className='status-dot status-off'; up.textContent=fmt(Date.now());
+      dot.className='status-dot status-live'; up.textContent=fmt(Date.now());
       const hasLive = matches.some(m=>m.elapsed&&m.elapsed!=='notstarted'&&!m.finished);
-      st.textContent = hasLive ? 'ESPN · Live · авто-обновление' : 'ESPN · резервный источник';
+      st.textContent = hasLive ? 'Live · авто-обновление' : 'Live';
       render();
       if (hasLive && !liveTimer) liveTimer = setInterval(fetchAPI, 60000);
       else if (!hasLive && liveTimer) { clearInterval(liveTimer); liveTimer = null; }
@@ -534,7 +508,6 @@ async function fetchAPI() {
     const cached = localStorage.getItem('wc26_cache');
     if (cached) {
       matches = JSON.parse(cached);
-      matches.forEach(m => { if (SCORE_OVERRIDES[m.id]) { m.hScore=SCORE_OVERRIDES[m.id][0]; m.aScore=SCORE_OVERRIDES[m.id][1]; m.finished=true; } });
       st.textContent='Нет связи · кэшированные данные';
     } else {
       st.textContent='Нет связи · данные недоступны';
@@ -545,37 +518,69 @@ async function fetchAPI() {
 }
 
 async function fetchESPN() {
-  const ROUND_ESPN = {'ro32':'1/32','ro16':'1/16','qf':'1/4','sf':'1/2','f':'Финал','3rd':'3-е место'};
-  const dates = [];
   const now = new Date();
-  for (let i=-2; i<=10; i++) { const d=new Date(now); d.setDate(d.getDate()+i); dates.push(d.toISOString().slice(0,10).replace(/-/g,'')); }
-  const seen = new Set(); const result = [];
-  for (const date of dates) {
-    try {
-      const r = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${date}`,{signal:AbortSignal.timeout(6000)});
-      if (!r.ok) continue;
-      const d = await r.json();
-      for (const e of (d.events||[])) {
-        if (seen.has(e.id)) continue; seen.add(e.id);
-        const c = e.competitions?.[0]; if (!c) continue;
-        const home = c.competitors?.find(t=>t.homeAway==='home');
-        const away = c.competitors?.find(t=>t.homeAway==='away');
-        if (!home||!away) continue;
-        const hEn = home.team.displayName, aEn = away.team.displayName;
-        const finished = c.status?.type?.completed||false;
-        const state = c.status?.type?.state||'pre';
-        const elapsed = state==='in' ? (c.status?.displayClock||'LIVE') : (finished?'finished':'notstarted');
-        const hScore = finished||state==='in' ? +home.score : null;
-        const aScore = finished||state==='in' ? +away.score : null;
-        const utcMs = new Date(e.date).getTime();
-        const id = 'espn_'+e.id;
-        const m = {id, type:'ro32', round:'1/32', home:tr(hEn), away:tr(aEn), homeEn:hEn, awayEn:aEn, utcMs, hScore, aScore, finished, elapsed, placeholder:false};
-        if (SCORE_OVERRIDES[id]) { m.hScore=SCORE_OVERRIDES[id][0]; m.aScore=SCORE_OVERRIDES[id][1]; m.finished=true; }
-        result.push(m);
-      }
-    } catch(e) {}
+  const dates = [];
+  for (let i=-14; i<=20; i++) { const d=new Date(now); d.setDate(d.getDate()+i); dates.push(d.toISOString().slice(0,10).replace(/-/g,'')); }
+
+  // Fetch all dates in parallel
+  const responses = await Promise.allSettled(dates.map(date =>
+    fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${date}`,{signal:AbortSignal.timeout(8000)}).then(r=>r.json())
+  ));
+
+  const seen = new Set(); const raw = [];
+  for (const res of responses) {
+    if (res.status!=='fulfilled') continue;
+    for (const e of (res.value?.events||[])) {
+      if (seen.has(e.id)) continue; seen.add(e.id);
+      const c = e.competitions?.[0]; if (!c) continue;
+      const home = c.competitors?.find(t=>t.homeAway==='home');
+      const away = c.competitors?.find(t=>t.homeAway==='away');
+      if (!home||!away) continue;
+      const hEn = home.team.displayName, aEn = away.team.displayName;
+      const statusName = c.status?.type?.name||'';
+      const state = c.status?.type?.state||'pre';
+      const finished = c.status?.type?.completed||false;
+      const period = c.status?.period||0;
+      const isAET = statusName==='STATUS_FINAL_AET'||period===4;
+      const isPEN = statusName==='STATUS_FINAL_PEN'||period===5;
+      const elapsed = state==='in' ? (c.status?.displayClock||'LIVE') : (finished?'finished':'notstarted');
+      const hScore = (finished||state==='in') ? +home.score : null;
+      const aScore = (finished||state==='in') ? +away.score : null;
+      const id = 'espn_'+e.id;
+      raw.push({id, espnId:e.id, type:'ro32', round:'1/32', home:tr(hEn), away:tr(aEn), homeEn:hEn, awayEn:aEn,
+        utcMs:new Date(e.date).getTime(), hScore, aScore, ftScore:null, penScore:null,
+        needsSummary:(isAET||isPEN)&&finished, finished, elapsed, placeholder:false});
+    }
   }
-  return result.sort((a,b)=>a.utcMs-b.utcMs);
+
+  // Fetch summaries for ET/pen matches in parallel to get period breakdown
+  const needSummary = raw.filter(m=>m.needsSummary);
+  const summaries = await Promise.allSettled(needSummary.map(m=>
+    fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event=${m.espnId}`,{signal:AbortSignal.timeout(8000)}).then(r=>r.json())
+  ));
+  for (let i=0; i<needSummary.length; i++) {
+    const res = summaries[i]; if (res.status!=='fulfilled') continue;
+    const m = needSummary[i];
+    const comps = res.value?.header?.competitions?.[0]; if (!comps) continue;
+    const hC = comps.competitors?.find(t=>t.homeAway==='home');
+    const aC = comps.competitors?.find(t=>t.homeAway==='away');
+    if (!hC||!aC) continue;
+    const hLS = hC.linescores||[], aLS = aC.linescores||[];
+    const hFT = (parseInt(hLS[0]?.displayValue)||0)+(parseInt(hLS[1]?.displayValue)||0);
+    const aFT = (parseInt(aLS[0]?.displayValue)||0)+(parseInt(aLS[1]?.displayValue)||0);
+    m.ftScore = [hFT, aFT];
+    if (hC.shootoutScore!=null) m.penScore = [Math.round(hC.shootoutScore), Math.round(aC.shootoutScore)];
+  }
+
+  // Apply manual overrides, then clean up internal fields
+  raw.forEach(m => {
+    if (FT_SCORES[m.id])    m.ftScore  = FT_SCORES[m.id];
+    if (PEN_SCORES[m.id])   m.penScore = PEN_SCORES[m.id];
+    if (SCORE_OVERRIDES[m.id]) { m.hScore=SCORE_OVERRIDES[m.id][0]; m.aScore=SCORE_OVERRIDES[m.id][1]; m.finished=true; }
+    delete m.needsSummary; delete m.espnId;
+  });
+
+  return raw.sort((a,b)=>a.utcMs-b.utcMs);
 }
 
 let liveTimer = null;
