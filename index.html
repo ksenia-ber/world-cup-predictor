@@ -180,6 +180,11 @@ const PREDICTIONS_BY_TEAMS = {
   'Paraguay|France':     { 'Валерий':[0,2], 'Тома':[0,3], 'Николай':[1,3], 'Ольга':[1,2], 'Алексей':[1,3], 'Ксения':[1,3] },
 };
 
+// Ручной оверрайд счёта (если API тормозит) — нормальное время
+const SCORE_OVERRIDES = {
+  '85': [2, 0], // Швейцария — Алжир
+};
+
 // Пенальти — формат: 'matchId': [дома, гости]
 const PEN_SCORES = {
   '74': [3,4],
@@ -571,6 +576,7 @@ async function fetchESPN() {
   raw.forEach(m => {
     if (FT_SCORES[m.id])    m.ftScore  = FT_SCORES[m.id];
     if (PEN_SCORES[m.id])   m.penScore = PEN_SCORES[m.id];
+    if (SCORE_OVERRIDES[m.id]) { m.hScore=SCORE_OVERRIDES[m.id][0]; m.aScore=SCORE_OVERRIDES[m.id][1]; m.finished=true; }
     delete m.needsSummary; delete m.espnId;
   });
 
