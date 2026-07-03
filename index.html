@@ -491,6 +491,7 @@ async function fetchAPI() {
       });
       allKO.forEach(m => { if (SCORE_OVERRIDES[m.id]) { m.hScore=SCORE_OVERRIDES[m.id][0]; m.aScore=SCORE_OVERRIDES[m.id][1]; m.finished=true; } });
       matches = allKO.slice().sort((a,b)=>a.utcMs-b.utcMs);
+      try { localStorage.setItem('wc26_cache', JSON.stringify(matches)); } catch(e) {}
       dot.className='status-dot status-live'; up.textContent=fmt(Date.now());
       const hasLive = matches.some(m=>m.elapsed&&m.elapsed!=='notstarted'&&!m.finished);
       st.textContent = hasLive ? 'Live · авто-обновление' : 'Live';
@@ -500,7 +501,19 @@ async function fetchAPI() {
       return;
     } catch(e) {}
   }
-  dot.className='status-dot status-off'; st.textContent='Офлайн';
+  dot.className='status-dot status-off';
+  try {
+    const cached = localStorage.getItem('wc26_cache');
+    if (cached) {
+      matches = JSON.parse(cached);
+      matches.forEach(m => { if (SCORE_OVERRIDES[m.id]) { m.hScore=SCORE_OVERRIDES[m.id][0]; m.aScore=SCORE_OVERRIDES[m.id][1]; m.finished=true; } });
+      st.textContent='Нет связи · показаны кэшированные данные';
+    } else {
+      st.textContent='Нет связи · данные недоступны';
+    }
+  } catch(e) { st.textContent='Нет связи'; }
+  render();
+  if (!liveTimer) liveTimer = setInterval(fetchAPI, 60000);
 }
 
 let liveTimer = null;
