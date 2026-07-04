@@ -454,12 +454,15 @@ function bmTeam(name, enName, score, penScore, isWinner, isLoser, isLive) {
 function bmCard(m) {
   if (!m) return '<div class="bracket-match placeholder"><div class="bm-team"><span class="bm-name">—</span></div><div class="bm-team"><span class="bm-name">—</span></div></div>';
   const isLive = m.elapsed&&m.elapsed!=='notstarted'&&!m.finished;
-  const hasScore = m.hScore!=null&&m.aScore!=null&&(isLive||m.finished||PEN_SCORES[m.id]);
-  const pen = PEN_SCORES[m.id];
-  const hWin = hasScore&&(+m.hScore>+m.aScore||(pen&&pen[0]>pen[1]));
-  const aWin = hasScore&&(+m.aScore>+m.hScore||(pen&&pen[1]>pen[0]));
+  const pen = getPen(m);
+  const ft = getFT(m);
+  const displayH = ft ? ft[0] : m.hScore;
+  const displayA = ft ? ft[1] : m.aScore;
+  const hasScore = displayH!=null&&displayA!=null&&(isLive||m.finished||pen);
+  const hWin = hasScore&&(pen ? pen[0]>pen[1] : +displayH>+displayA);
+  const aWin = hasScore&&(pen ? pen[1]>pen[0] : +displayA>+displayH);
   const cls = m.placeholder?'placeholder':isLive?'live':'';
-  return `<div class="bracket-match ${cls}">${bmTeam(m.home,m.homeEn,hasScore?m.hScore:null,pen?pen[0]:null,hWin,aWin,isLive)}${bmTeam(m.away,m.awayEn,hasScore?m.aScore:null,pen?pen[1]:null,aWin,hWin,isLive)}</div>`;
+  return `<div class="bracket-match ${cls}">${bmTeam(m.home,m.homeEn,hasScore?displayH:null,pen?pen[0]:null,hWin,aWin,isLive)}${bmTeam(m.away,m.awayEn,hasScore?displayA:null,pen?pen[1]:null,aWin,hWin,isLive)}</div>`;
 }
 
 function getM(id) { return allKO.find(m=>String(m.id)===String(id)); }
