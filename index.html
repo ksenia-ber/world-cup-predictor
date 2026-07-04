@@ -467,17 +467,58 @@ function bmCard(m) {
 
 function getM(id) { return allKO.find(m=>String(m.id)===String(id)); }
 
+// Which finished matches determine the teams in each future match
+const BRACKET_WINNER_FEEDS = {
+  '89':['74','77'],'90':['73','75'],'91':['76','78'],'92':['79','80'],
+  '93':['83','84'],'94':['81','82'],'95':['86','88'],'96':['85','87'],
+  '97':['89','90'],'98':['93','94'],'99':['91','92'],'100':['95','96'],
+  '101':['97','98'],'102':['99','100'],'104':['101','102']
+};
+const BRACKET_LOSER_FEEDS = {'103':['101','102']};
+
+function bracketWinner(id) {
+  const m = getM(id); if (!m||!m.finished) return null;
+  const pen = getPen(m), ft = getFT(m);
+  const h = ft?ft[0]:m.hScore, a = ft?ft[1]:m.aScore;
+  if (pen) return pen[0]>pen[1]?{name:m.home,en:m.homeEn}:{name:m.away,en:m.awayEn};
+  if (+h>+a) return {name:m.home,en:m.homeEn};
+  if (+a>+h) return {name:m.away,en:m.awayEn};
+  return null;
+}
+function bracketLoser(id) {
+  const m = getM(id); if (!m||!m.finished) return null;
+  const pen = getPen(m), ft = getFT(m);
+  const h = ft?ft[0]:m.hScore, a = ft?ft[1]:m.aScore;
+  if (pen) return pen[0]>pen[1]?{name:m.away,en:m.awayEn}:{name:m.home,en:m.homeEn};
+  if (+h>+a) return {name:m.away,en:m.awayEn};
+  if (+a>+h) return {name:m.home,en:m.homeEn};
+  return null;
+}
+
+function resolvedBmCard(id) {
+  let m = getM(id);
+  const sid = String(id);
+  const wfeeds = BRACKET_WINNER_FEEDS[sid], lfeeds = BRACKET_LOSER_FEEDS[sid];
+  const feeds = wfeeds||lfeeds; const useLoser = !!lfeeds;
+  if (feeds && (!m||m.placeholder)) {
+    const fn = useLoser ? bracketLoser : bracketWinner;
+    const t1 = fn(feeds[0]), t2 = fn(feeds[1]);
+    if (t1||t2) {
+      m = m ? {...m} : {id,home:'—',homeEn:'',away:'—',awayEn:'',hScore:null,aScore:null,finished:false,elapsed:'notstarted',placeholder:true,round:''};
+      if (t1) { m.home=t1.name; m.homeEn=t1.en; m.placeholder=!t2; }
+      if (t2) { m.away=t2.name; m.awayEn=t2.en; if(t1) m.placeholder=false; }
+    }
+  }
+  return bmCard(m);
+}
+
 function renderBracket() {
   function col(ids) {
     let h = '<div class="bracket-round">';
-    ids.forEach(id => { h += bmCard(getM(id)); });
+    ids.forEach(id => { h += resolvedBmCard(id); });
     return h+'</div>';
   }
 
-  // Left half: feeds into SF 101
-  // QF97 ← R16-89(R32: 74,77) + R16-90(R32: 73,75)
-  // QF98 ← R16-93(R32: 83,84) + R16-94(R32: 81,82)
-  // All 16 R32 ordered so pairs feed into the correct R16
   // R16-89 ← 74,77 | R16-90 ← 73,75 | R16-91 ← 76,78 | R16-92 ← 79,80
   // R16-93 ← 83,84 | R16-94 ← 81,82 | R16-95 ← 86,88 | R16-96 ← 85,87
   // QF-97 ← 89,90 | QF-98 ← 93,94 | QF-99 ← 91,92 | QF-100 ← 95,96
@@ -489,12 +530,11 @@ function renderBracket() {
   html += col(['89','90','91','92','93','94','95','96']);
   html += col(['97','99','98','100']);
   html += col(['101','102']);
-  // Final + 3rd place with labels
   let fin = '<div class="bracket-round" style="justify-content:center;gap:0">';
   fin += '<div style="font-size:9px;color:#e94560;text-align:center;padding:2px 0">Финал</div>';
-  fin += bmCard(getM('104'));
+  fin += resolvedBmCard('104');
   fin += '<div style="font-size:9px;color:#e94560;text-align:center;padding:6px 0 2px">3-е место</div>';
-  fin += bmCard(getM('103'));
+  fin += resolvedBmCard('103');
   fin += '</div>';
   html += fin;
   html += '</div></div>';
