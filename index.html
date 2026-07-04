@@ -442,13 +442,14 @@ function renderLB() {
   document.getElementById('panel-leaderboard').innerHTML = h+'</div>'+bd;
 }
 
-function bmTeam(name, enName, score, penScore, isWinner, isLoser, isLive) {
+function bmTeam(name, enName, score, penScore, isWinner, isLoser, isLive, dimmed) {
   const f = flag(enName);
   const cls = isWinner?'bm-winner':isLoser?'bm-loser':'';
+  const style = dimmed ? ' style="opacity:0.35"' : '';
   const scCls = isLive?'live-sc':'';
   const penHtml = penScore!=null ? `<span style="font-size:9px;color:#aaa">(${penScore})</span>` : '';
   const sc = score!=null&&score!==''?`<span class="bm-score ${scCls}">${score}</span>${penHtml}`:'';
-  return `<div class="bm-team ${cls}">${f?`<span class="bm-flag">${f}</span>`:''}<span class="bm-name">${name}</span>${sc}</div>`;
+  return `<div class="bm-team ${cls}"${style}>${f?`<span class="bm-flag">${f}</span>`:''}<span class="bm-name">${name}</span>${sc}</div>`;
 }
 
 function bmCard(m) {
@@ -504,9 +505,17 @@ function resolvedBmCard(id) {
     const fn = useLoser ? bracketLoser : bracketWinner;
     const t1 = fn(feeds[0]), t2 = fn(feeds[1]);
     if (t1||t2) {
-      m = m ? {...m} : {id,home:'—',homeEn:'',away:'—',awayEn:'',hScore:null,aScore:null,finished:false,elapsed:'notstarted',placeholder:true,round:''};
-      if (t1) { m.home=t1.name; m.homeEn=t1.en; m.placeholder=false; }
-      if (t2) { m.away=t2.name; m.awayEn=t2.en; m.placeholder=false; }
+      m = m ? {...m} : {id,home:'—',homeEn:'',away:'—',awayEn:'',hScore:null,aScore:null,finished:false,elapsed:'notstarted',placeholder:false,round:''};
+      if (t1) { m.home=t1.name; m.homeEn=t1.en; }
+      if (t2) { m.away=t2.name; m.awayEn=t2.en; }
+      m.placeholder=false;
+      // Render with per-team dimming for unknown slots
+      const pen=getPen(m),ft=getFT(m),dH=ft?ft[0]:m.hScore,dA=ft?ft[1]:m.aScore;
+      const hasScore=dH!=null&&dA!=null&&(m.finished||pen);
+      const hWin=hasScore&&(pen?pen[0]>pen[1]:+dH>+dA), aWin=hasScore&&(pen?pen[1]>pen[0]:+dA>+dH);
+      const isLive=m.elapsed&&m.elapsed!=='notstarted'&&!m.finished;
+      const cls=isLive?'live':'';
+      return `<div class="bracket-match ${cls}">${bmTeam(m.home,m.homeEn,hasScore?dH:null,pen?pen[0]:null,hWin,aWin,isLive,!t1)}${bmTeam(m.away,m.awayEn,hasScore?dA:null,pen?pen[1]:null,aWin,hWin,isLive,!t2)}</div>`;
     }
   }
   return bmCard(m);
