@@ -456,9 +456,8 @@ function bmCard(m) {
   if (!m) return '<div class="bracket-match placeholder"><div class="bm-team"><span class="bm-name">—</span></div><div class="bm-team"><span class="bm-name">—</span></div></div>';
   const isLive = m.elapsed&&m.elapsed!=='notstarted'&&!m.finished;
   const pen = getPen(m);
-  const ft = getFT(m);
-  const displayH = ft ? ft[0] : m.hScore;
-  const displayA = ft ? ft[1] : m.aScore;
+  const displayH = m.hScore;
+  const displayA = m.aScore;
   const hasScore = displayH!=null&&displayA!=null&&(isLive||m.finished||pen);
   const hWin = hasScore&&(pen ? pen[0]>pen[1] : +displayH>+displayA);
   const aWin = hasScore&&(pen ? pen[1]>pen[0] : +displayA>+displayH);
