@@ -169,6 +169,13 @@ const FT_SCORES = {
   '75': [1,1],
   '82': [2,2],
 };
+const FT_SCORES_BY_TEAMS = {
+  'Germany|Paraguay':   [1,1],
+  'Netherlands|Morocco':[1,1],
+  'Belgium|Senegal':    [2,2],
+  'Australia|Egypt':    [1,1],
+  'Argentina|Cape Verde':[1,1],
+};
 
 // Прогнозы по именам команд (для матчей, чьи ID ещё неизвестны)
 // Формат: 'ДомаEN|ГостиEN': { 'Имя': [голы_дома, голы_гостей] }
@@ -189,6 +196,11 @@ const SCORE_OVERRIDES = {
 const PEN_SCORES = {
   '74': [3,4],
   '75': [2,3],
+};
+const PEN_SCORES_BY_TEAMS = {
+  'Germany|Paraguay':    [3,4],
+  'Netherlands|Morocco': [2,3],
+  'Australia|Egypt':     [2,4],
 };
 
 // =============================================
@@ -216,7 +228,7 @@ const TEAM_RU = {
   'United States':'США','Paraguay':'Парагвай','Haiti':'Гаити','Scotland':'Шотландия',
   'Australia':'Австралия','Turkey':'Турция','Brazil':'Бразилия','Japan':'Япония',
   'Germany':'Германия','Netherlands':'Нидерланды','Morocco':'Марокко','France':'Франция',
-  'Sweden':'Швеция','England':'Англия','DR Congo':'ДР Конго','Democratic Republic of the Congo':'ДР Конго',
+  'Sweden':'Швеция','England':'Англия','DR Congo':'ДР Конго','Congo DR':'ДР Конго','Democratic Republic of the Congo':'ДР Конго',
   'Belgium':'Бельгия','Senegal':'Сенегал','Spain':'Испания','Austria':'Австрия',
   'Portugal':'Португалия','Croatia':'Хорватия','Switzerland':'Швейцария','Algeria':'Алжир',
   'Egypt':'Египет','Argentina':'Аргентина','Cabo Verde':'Кабо-Верде','Cape Verde':'Кабо-Верде',
@@ -238,7 +250,7 @@ const FLAGS = {
   'United States':'\u{1F1FA}\u{1F1F8}','Paraguay':'\u{1F1F5}\u{1F1FE}','Haiti':'\u{1F1ED}\u{1F1F9}','Scotland':'\u{1F3F4}\u{E0067}\u{E0062}\u{E0073}\u{E0063}\u{E0074}\u{E007F}',
   'Australia':'\u{1F1E6}\u{1F1FA}','Turkey':'\u{1F1F9}\u{1F1F7}','Brazil':'\u{1F1E7}\u{1F1F7}','Japan':'\u{1F1EF}\u{1F1F5}',
   'Germany':'\u{1F1E9}\u{1F1EA}','Netherlands':'\u{1F1F3}\u{1F1F1}','Morocco':'\u{1F1F2}\u{1F1E6}','France':'\u{1F1EB}\u{1F1F7}',
-  'Sweden':'\u{1F1F8}\u{1F1EA}','England':'\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}','DR Congo':'\u{1F1E8}\u{1F1E9}','Democratic Republic of the Congo':'\u{1F1E8}\u{1F1E9}',
+  'Sweden':'\u{1F1F8}\u{1F1EA}','England':'\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}','DR Congo':'\u{1F1E8}\u{1F1E9}','Congo DR':'\u{1F1E8}\u{1F1E9}','Democratic Republic of the Congo':'\u{1F1E8}\u{1F1E9}',
   'Belgium':'\u{1F1E7}\u{1F1EA}','Senegal':'\u{1F1F8}\u{1F1F3}','Spain':'\u{1F1EA}\u{1F1F8}','Austria':'\u{1F1E6}\u{1F1F9}',
   'Portugal':'\u{1F1F5}\u{1F1F9}','Croatia':'\u{1F1ED}\u{1F1F7}','Switzerland':'\u{1F1E8}\u{1F1ED}','Algeria':'\u{1F1E9}\u{1F1FF}',
   'Egypt':'\u{1F1EA}\u{1F1EC}','Argentina':'\u{1F1E6}\u{1F1F7}','Cabo Verde':'\u{1F1E8}\u{1F1FB}','Cape Verde':'\u{1F1E8}\u{1F1FB}',
@@ -287,8 +299,8 @@ function pts(ph,pa,ah,aa) {
 let matches = [], allKO = [];
 
 function getPred(m) { return PREDICTIONS[m.id] || PREDICTIONS_BY_TEAMS[m.homeEn+'|'+m.awayEn]; }
-function getFT(m)  { return m.ftScore  || FT_SCORES[m.id]  || null; }
-function getPen(m) { return m.penScore || PEN_SCORES[m.id] || null; }
+function getFT(m)  { return m.ftScore  || FT_SCORES[m.id]  || FT_SCORES_BY_TEAMS[m.homeEn+'|'+m.awayEn]  || null; }
+function getPen(m) { return m.penScore || PEN_SCORES[m.id] || PEN_SCORES_BY_TEAMS[m.homeEn+'|'+m.awayEn] || null; }
 
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
