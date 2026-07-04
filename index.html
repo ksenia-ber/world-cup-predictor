@@ -505,8 +505,8 @@ function resolvedBmCard(id) {
     const t1 = fn(feeds[0]), t2 = fn(feeds[1]);
     if (t1||t2) {
       m = m ? {...m} : {id,home:'—',homeEn:'',away:'—',awayEn:'',hScore:null,aScore:null,finished:false,elapsed:'notstarted',placeholder:true,round:''};
-      if (t1) { m.home=t1.name; m.homeEn=t1.en; m.placeholder=!t2; }
-      if (t2) { m.away=t2.name; m.awayEn=t2.en; if(t1) m.placeholder=false; }
+      if (t1) { m.home=t1.name; m.homeEn=t1.en; m.placeholder=false; }
+      if (t2) { m.away=t2.name; m.awayEn=t2.en; m.placeholder=false; }
     }
   }
   return bmCard(m);
