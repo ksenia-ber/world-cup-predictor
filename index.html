@@ -561,6 +561,20 @@ function renderBracket() {
   document.getElementById('panel-bracket').innerHTML = html;
 }
 
+function resolvePlaceholders() {
+  allKO.forEach(m => {
+    const sid = String(m.id);
+    const wfeeds = BRACKET_WINNER_FEEDS[sid], lfeeds = BRACKET_LOSER_FEEDS[sid];
+    if (!wfeeds && !lfeeds) return;
+    const feeds = wfeeds || lfeeds; const useLoser = !!lfeeds;
+    const fn = useLoser ? bracketLoser : bracketWinner;
+    const t1 = fn(feeds[0]), t2 = fn(feeds[1]);
+    if (t1) { m.home = t1.name; m.homeEn = t1.en; }
+    if (t2) { m.away = t2.name; m.awayEn = t2.en; }
+    if (t1 || t2) m.placeholder = false;
+  });
+}
+
 async function fetchAPI() {
   const dot=document.getElementById('api-dot'), st=document.getElementById('api-status'), up=document.getElementById('last-update');
   const px=[u=>u, u=>'https://corsproxy.io/?'+encodeURIComponent(u), u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)];
@@ -577,6 +591,7 @@ async function fetchAPI() {
         return {id:x.id||x._id, type:x.type, round:ROUND_MAP[x.type], home:hReal?tr(x.home_team_name_en):trL(x.home_team_label), away:aReal?tr(x.away_team_name_en):trL(x.away_team_label), homeEn:hReal?x.home_team_name_en:'', awayEn:aReal?x.away_team_name_en:'', utcMs:toUTC(x.local_date||'',x.stadium_id), hScore:x.home_score, aScore:x.away_score, finished:x.finished===true||x.finished==='TRUE'||x.finished==='true', elapsed:x.time_elapsed||'notstarted', placeholder:!hReal&&!aReal};
       });
       allKO.forEach(m => { if (SCORE_OVERRIDES[m.id]) { m.hScore=SCORE_OVERRIDES[m.id][0]; m.aScore=SCORE_OVERRIDES[m.id][1]; m.finished=true; } });
+      resolvePlaceholders();
       matches = allKO.slice().sort((a,b)=>a.utcMs-b.utcMs);
       try { localStorage.setItem('wc26_cache', JSON.stringify(matches)); } catch(e) {}
       dot.className='status-dot status-live'; up.textContent=fmt(Date.now());
