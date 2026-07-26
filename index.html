@@ -168,14 +168,67 @@ const FT_SCORES = {
   '74': [1,1],
   '75': [1,1],
   '82': [2,2],
+  '86': [1,1],
+  '96': [0,0],
 };
 const FT_SCORES_BY_TEAMS = {
-  'Germany|Paraguay':   [1,1],
-  'Netherlands|Morocco':[1,1],
-  'Belgium|Senegal':    [2,2],
-  'Australia|Egypt':    [1,1],
+  'Germany|Paraguay':    [1,1],
+  'Netherlands|Morocco': [1,1],
+  'Belgium|Senegal':     [2,2],
+  'Australia|Egypt':     [1,1],
   'Argentina|Cape Verde':[1,1],
+  'Switzerland|Colombia':[0,0],
 };
+
+// Полные данные всех завершённых матчей — резервный источник если API и кэш недоступны
+const STATIC_MATCHES_RAW = [
+  // 1/16 финала (R32)
+  {id:'73',t:'r32',hEn:'South Africa',aEn:'Canada',h:0,a:1,d:'06/28/2026 12:00',s:16},
+  {id:'74',t:'r32',hEn:'Germany',aEn:'Paraguay',h:1,a:1,ft:[1,1],pen:[3,4],d:'06/29/2026 16:30',s:9},
+  {id:'75',t:'r32',hEn:'Netherlands',aEn:'Morocco',h:1,a:1,ft:[1,1],pen:[2,3],d:'06/29/2026 19:00',s:3},
+  {id:'76',t:'r32',hEn:'Brazil',aEn:'Japan',h:2,a:1,d:'06/29/2026 12:00',s:5},
+  {id:'77',t:'r32',hEn:'France',aEn:'Sweden',h:3,a:0,d:'06/30/2026 17:00',s:11},
+  {id:'78',t:'r32',hEn:'Ivory Coast',aEn:'Norway',h:1,a:2,d:'06/30/2026 12:00',s:4},
+  {id:'79',t:'r32',hEn:'Mexico',aEn:'Ecuador',h:2,a:0,d:'06/30/2026 19:00',s:1},
+  {id:'80',t:'r32',hEn:'England',aEn:'Democratic Republic of the Congo',h:2,a:1,d:'07/01/2026 12:00',s:7},
+  {id:'81',t:'r32',hEn:'United States',aEn:'Bosnia and Herzegovina',h:2,a:0,d:'07/01/2026 17:00',s:15},
+  {id:'82',t:'r32',hEn:'Belgium',aEn:'Senegal',h:3,a:2,ft:[2,2],d:'07/01/2026 13:00',s:14},
+  {id:'83',t:'r32',hEn:'Portugal',aEn:'Croatia',h:2,a:1,d:'07/02/2026 19:00',s:12},
+  {id:'84',t:'r32',hEn:'Spain',aEn:'Austria',h:3,a:0,d:'07/02/2026 12:00',s:16},
+  {id:'85',t:'r32',hEn:'Switzerland',aEn:'Algeria',h:2,a:0,d:'07/02/2026 20:00',s:13},
+  {id:'86',t:'r32',hEn:'Argentina',aEn:'Cape Verde',h:3,a:2,ft:[1,1],d:'07/03/2026 18:00',s:8},
+  {id:'87',t:'r32',hEn:'Colombia',aEn:'Ghana',h:1,a:0,d:'07/03/2026 20:30',s:6},
+  {id:'88',t:'r32',hEn:'Australia',aEn:'Egypt',h:1,a:1,ft:[1,1],pen:[2,4],d:'07/03/2026 13:00',s:4},
+  // 1/8 финала (R16)
+  {id:'89',t:'r16',hEn:'Paraguay',aEn:'France',h:0,a:1,d:'07/04/2026 17:00',s:10},
+  {id:'90',t:'r16',hEn:'Canada',aEn:'Morocco',h:0,a:3,d:'07/04/2026 12:00',s:5},
+  {id:'91',t:'r16',hEn:'Brazil',aEn:'Norway',h:1,a:2,d:'07/05/2026 12:00',s:11},
+  {id:'92',t:'r16',hEn:'Mexico',aEn:'England',h:2,a:3,d:'07/05/2026 19:00',s:1},
+  {id:'93',t:'r16',hEn:'Portugal',aEn:'Spain',h:0,a:1,d:'07/06/2026 12:00',s:4},
+  {id:'94',t:'r16',hEn:'United States',aEn:'Belgium',h:1,a:4,d:'07/06/2026 19:00',s:14},
+  {id:'95',t:'r16',hEn:'Argentina',aEn:'Egypt',h:3,a:2,d:'07/07/2026 12:00',s:7},
+  {id:'96',t:'r16',hEn:'Switzerland',aEn:'Colombia',h:0,a:0,ft:[0,0],d:'07/07/2026 19:00',s:13},
+  // Четвертьфинал
+  {id:'97',t:'qf',hEn:'France',aEn:'Morocco',h:2,a:0,d:'07/09/2026 19:00',s:9},
+  {id:'98',t:'qf',hEn:'Spain',aEn:'Belgium',h:2,a:1,d:'07/10/2026 19:00',s:16},
+  {id:'99',t:'qf',hEn:'Norway',aEn:'England',h:1,a:2,d:'07/11/2026 12:00',s:8},
+  {id:'100',t:'qf',hEn:'Argentina',aEn:'Switzerland',h:3,a:1,d:'07/11/2026 19:00',s:6},
+  // Полуфинал
+  {id:'101',t:'sf',hEn:'France',aEn:'Spain',h:0,a:2,d:'07/14/2026 19:00',s:4},
+  {id:'102',t:'sf',hEn:'England',aEn:'Argentina',h:1,a:2,d:'07/15/2026 19:00',s:7},
+  // Матч за 3-е место и Финал добавляются после игр
+];
+function buildStaticMatches() {
+  return STATIC_MATCHES_RAW.map(x => ({
+    id:x.id, type:x.t, round:ROUND_MAP[x.t],
+    home:tr(x.hEn), homeEn:x.hEn,
+    away:tr(x.aEn), awayEn:x.aEn,
+    hScore:x.h, aScore:x.a,
+    ftScore:x.ft||null, penScore:x.pen||null,
+    finished:true, elapsed:'notstarted', placeholder:false,
+    utcMs:toUTC(x.d, x.s)
+  }));
+}
 
 // Прогнозы по именам команд (для матчей, чьи ID ещё неизвестны)
 // Формат: 'ДомаEN|ГостиEN': { 'Имя': [голы_дома, голы_гостей] }
@@ -630,7 +683,9 @@ async function fetchAPI() {
       matches.forEach(m => { if (SCORE_OVERRIDES[m.id]) { m.hScore=SCORE_OVERRIDES[m.id][0]; m.aScore=SCORE_OVERRIDES[m.id][1]; m.finished=true; } });
       st.textContent='Нет связи · кэшированные данные';
     } else {
-      st.textContent='Нет связи · данные недоступны';
+      matches = buildStaticMatches();
+      resolvePlaceholders();
+      st.textContent='Нет связи · статические данные';
     }
   } catch(e) { st.textContent='Нет связи'; }
   render();
