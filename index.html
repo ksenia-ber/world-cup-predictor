@@ -170,14 +170,20 @@ const FT_SCORES = {
   '82': [2,2],
   '86': [1,1],
   '96': [0,0],
+  '99': [1,1],
+  '100':[1,1],
+  '104':[0,0],
 };
 const FT_SCORES_BY_TEAMS = {
-  'Germany|Paraguay':    [1,1],
-  'Netherlands|Morocco': [1,1],
-  'Belgium|Senegal':     [2,2],
-  'Australia|Egypt':     [1,1],
-  'Argentina|Cape Verde':[1,1],
-  'Switzerland|Colombia':[0,0],
+  'Germany|Paraguay':      [1,1],
+  'Netherlands|Morocco':   [1,1],
+  'Belgium|Senegal':       [2,2],
+  'Australia|Egypt':       [1,1],
+  'Argentina|Cape Verde':  [1,1],
+  'Switzerland|Colombia':  [0,0],
+  'Norway|England':        [1,1],
+  'Argentina|Switzerland': [1,1],
+  'Spain|Argentina':       [0,0],
 };
 
 // Полные данные всех завершённых матчей — резервный источник если API и кэш недоступны
@@ -207,16 +213,19 @@ const STATIC_MATCHES_RAW = [
   {id:'93',t:'r16',hEn:'Portugal',aEn:'Spain',h:0,a:1,d:'07/06/2026 12:00',s:4},
   {id:'94',t:'r16',hEn:'United States',aEn:'Belgium',h:1,a:4,d:'07/06/2026 19:00',s:14},
   {id:'95',t:'r16',hEn:'Argentina',aEn:'Egypt',h:3,a:2,d:'07/07/2026 12:00',s:7},
-  {id:'96',t:'r16',hEn:'Switzerland',aEn:'Colombia',h:0,a:0,ft:[0,0],d:'07/07/2026 19:00',s:13},
+  {id:'96',t:'r16',hEn:'Switzerland',aEn:'Colombia',h:0,a:0,ft:[0,0],pen:[4,3],d:'07/07/2026 19:00',s:13},
   // Четвертьфинал
   {id:'97',t:'qf',hEn:'France',aEn:'Morocco',h:2,a:0,d:'07/09/2026 19:00',s:9},
   {id:'98',t:'qf',hEn:'Spain',aEn:'Belgium',h:2,a:1,d:'07/10/2026 19:00',s:16},
-  {id:'99',t:'qf',hEn:'Norway',aEn:'England',h:1,a:2,d:'07/11/2026 12:00',s:8},
-  {id:'100',t:'qf',hEn:'Argentina',aEn:'Switzerland',h:3,a:1,d:'07/11/2026 19:00',s:6},
+  {id:'99',t:'qf',hEn:'Norway',aEn:'England',h:1,a:2,ft:[1,1],d:'07/11/2026 12:00',s:8},
+  {id:'100',t:'qf',hEn:'Argentina',aEn:'Switzerland',h:3,a:1,ft:[1,1],d:'07/11/2026 19:00',s:6},
   // Полуфинал
   {id:'101',t:'sf',hEn:'France',aEn:'Spain',h:0,a:2,d:'07/14/2026 19:00',s:4},
   {id:'102',t:'sf',hEn:'England',aEn:'Argentina',h:1,a:2,d:'07/15/2026 19:00',s:7},
-  // Матч за 3-е место и Финал добавляются после игр
+  // Матч за 3-е место
+  {id:'103',t:'third',hEn:'France',aEn:'England',h:4,a:6,d:'07/18/2026 19:00',s:8},
+  // Финал
+  {id:'104',t:'final',hEn:'Spain',aEn:'Argentina',h:1,a:0,ft:[0,0],d:'07/19/2026 19:00',s:11},
 ];
 function buildStaticMatches() {
   return STATIC_MATCHES_RAW.map(x => ({
@@ -268,6 +277,7 @@ const PEN_SCORES_BY_TEAMS = {
   'Germany|Paraguay':    [3,4],
   'Netherlands|Morocco': [2,3],
   'Australia|Egypt':     [2,4],
+  'Switzerland|Colombia':[4,3],
 };
 
 // =============================================
